@@ -5,7 +5,7 @@ import processing.core.PApplet;
 import processing.core.PImage;
 
 
-public class Pieces extends MovingObject {
+public class Piece extends MovingObject {
   public static final int GRIDNUM = Board.GRIDNUM;
   public static final int GRIDSIZE = Board.GRIDSIZE;
   public static final int FPS = 60;
@@ -22,7 +22,7 @@ public class Pieces extends MovingObject {
   private ArrayList<Square> validCapture = new ArrayList<Square>();
   private boolean isWhite;
 
-  public Pieces(int x, int y, String code) {
+  public Piece(int x, int y, String code) {
     super(x, y);
     xDest = x;
     yDest = y;
@@ -37,8 +37,8 @@ public class Pieces extends MovingObject {
   }
 
   public static void setMoveStat(double movementSpeed, int movementTime) {
-    Pieces.movementSpeed = movementSpeed;
-    Pieces.movementTime = movementTime;
+    Piece.movementSpeed = movementSpeed;
+    Piece.movementTime = movementTime;
   }
 
   /**
@@ -70,7 +70,7 @@ public class Pieces extends MovingObject {
   }
 
   public void tick() {
-    double movementSpeed = Pieces.movementSpeed;
+    double movementSpeed = Piece.movementSpeed;
     if(overrideSpeed > 0){
       movementSpeed = overrideSpeed;
     }

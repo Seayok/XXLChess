@@ -15,17 +15,15 @@ public class Square extends GameObject {
   private boolean selected;
   private boolean onPieceWay;
   private boolean onCaptureway;
-  private Pieces piece;
   private int[] color;
   /**
    * Creates a new square with coordinates and colors
    */
-  public Square(int x, int y, String piece, PApplet app) {
+  public Square(int x, int y, PApplet app) {
     super(x * SQUARESIZE, y * SQUARESIZE);
     selected = false;
     color = new int[3];
     setColor();
-    setPiece(piece, app);
   }
 
   public void setColor() {
@@ -46,7 +44,7 @@ public class Square extends GameObject {
     return onPieceWay;
   }
 
-  public void setPiece(Pieces piece) {
+  public void setPiece(Piece piece) {
     this.piece = piece;
     this.piece.setDestination(x, y);
   }
@@ -73,14 +71,14 @@ public class Square extends GameObject {
 
   public void setPiece(String piece, PApplet app) {
     if (!piece.equals("")) {
-      this.piece = new Pieces(x, y, piece);
+      this.piece = new Piece(x, y, piece);
       this.piece.setSprite(app);
     } else {
       this.piece = null;
     }
   }
 
-  public Pieces getPiece(){
+  public Piece getPiece(){
     return this.piece;
   }
 

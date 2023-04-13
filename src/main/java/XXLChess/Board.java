@@ -1,8 +1,7 @@
 package XXLChess;
 
+import java.util.concurrent.ConcurrentHashMap;
 import processing.core.PApplet;
-import java.util.ArrayList;
-import java.util.concurrent.TimeUnit;
 import processing.data.JSONObject;
 
 /**
@@ -12,9 +11,9 @@ public class Board extends GameObject {
   public static final int GRIDSIZE = 48;
   public static final int GRIDNUM = 14;
   public static double MAX_MOVEMENT_TIME;
-  private Pieces selPieces;
+  private Piece selPiece;
   private Square selSquare;
-  private ArrayList<Pieces> pieces;
+  private ConcurrentHashMap<Square, Piece> boardMap;
   private Square[][] squareMat;
 
   /**
@@ -23,12 +22,13 @@ public class Board extends GameObject {
   public Board(String[][] levelArr, PApplet app) {
     super(0, 0);
     squareMat = new Square[GRIDNUM][GRIDNUM];
-    pieces = new ArrayList<>();
+    boardMap = new ConcurrentHashMap<>();
     for (int i = 0; i < GRIDNUM; i++) {
       for (int j = 0; j < GRIDNUM; j++) {
-        squareMat[i][j] = new Square(i, j, levelArr[j][i], app);
-        if(squareMat[i][j].getPiece() !=null) {
-          pieces.add(squareMat[i][j].getPiece());
+        squareMat[i][j] = new Square(i, j, app);
+        if(levelArr[j][i] != " ") {
+          Piece newPiece = new Piece(i * GRIDSIZE, j * GRIDSIZE, levelArr[j][i]);
+          boardMap.put(squareMat[i][j], newPiece);
         }
       }
     }
@@ -36,26 +36,22 @@ public class Board extends GameObject {
   }
 
   public static void updateMoveStatus(JSONObject conf) {
-    Pieces.setMoveStat(conf.getDouble("piece_movement_speed"), conf.getInt("max_movement_time"));
+    Piece.setMoveStat(conf.getDouble("piece_movement_speed"), conf.getInt("max_movement_time"));
     MAX_MOVEMENT_TIME = conf.getDouble("max_movement_time");
   }
-
-  public boolean checkCheck() {
-    return false;
-  }
-
+  
   public void startClick(int x, int y) {
     //overflow check
-    if(x > GRIDSIZE * GRIDNUM || y > GRIDSIZE * GRIDNUM || squareMat[x/GRIDSIZE][y/GRIDSIZE].getPiece() == null) 
+    if(x > GRIDSIZE * GRIDNUM || y > GRIDSIZE * GRIDNUM || boardMap.containsKey(squareMat[x/GRIDSIZE][y/GRIDSIZE]))
       return;
     selSquare = squareMat[x/GRIDSIZE][y/GRIDSIZE];
-    selPieces = selSquare.getPiece();
+    selPiece = boardMap.get(selSquare);
     selSquare.onSelected();
-    selPieces.displayMoveSet(); 
+    selPiece.displayMoveSet(); 
   }
 
   public void updateValidMove() {
-    for(Pieces piece : pieces) {
+    for(Piece piece : boardMap.values()) {
       piece.updateValidMove(this);
     }
   }
@@ -64,15 +60,12 @@ public class Board extends GameObject {
     Square target = squareMat[x/GRIDSIZE][y/GRIDSIZE];
     if(!target.isOnPieceWay() && !target.isOnCaptured()) {
       reset();
-      if(target.getPiece() != null) {
+      if(boardMap.containsKey(target)){
         startClick(x, y);
       }
     } else{
-      Pieces removePieces = target.getPiece();
+      boardMap.compute(target, (k, v) -> selPiece);
       selSquare.movePiece(target);
-      if(removePieces != null) {
-        pieces.remove(removePieces);
-      }
       updateValidMove();
       reset();
     }
@@ -88,7 +81,7 @@ public class Board extends GameObject {
     }
     selSquare.deselect();
     selSquare = null;
-    selPieces = null;
+    selPiece = null;
   }
   
   public void onClick(int x, int y) {
@@ -110,7 +103,7 @@ public class Board extends GameObject {
         squareMat[i][j].draw(app);
       }
     }
-    for(Pieces piece : pieces) {
+    for(Piece piece : boardMap.values()) {
       piece.draw(app);
     }
   }
