@@ -26,8 +26,9 @@ public class Board extends GameObject {
     for (int i = 0; i < GRIDNUM; i++) {
       for (int j = 0; j < GRIDNUM; j++) {
         squareMat[i][j] = new Square(i, j, app);
-        if(levelArr[j][i] != " ") {
+        if(levelArr[j][i] != "") {
           Piece newPiece = new Piece(i * GRIDSIZE, j * GRIDSIZE, levelArr[j][i]);
+          newPiece.setSprite(app);
           boardMap.put(squareMat[i][j], newPiece);
         }
       }
@@ -42,7 +43,7 @@ public class Board extends GameObject {
   
   public void startClick(int x, int y) {
     //overflow check
-    if(x > GRIDSIZE * GRIDNUM || y > GRIDSIZE * GRIDNUM || boardMap.containsKey(squareMat[x/GRIDSIZE][y/GRIDSIZE]))
+    if(x > GRIDSIZE * GRIDNUM || y > GRIDSIZE * GRIDNUM || !boardMap.containsKey(squareMat[x/GRIDSIZE][y/GRIDSIZE]))
       return;
     selSquare = squareMat[x/GRIDSIZE][y/GRIDSIZE];
     selPiece = boardMap.get(selSquare);
@@ -56,6 +57,10 @@ public class Board extends GameObject {
     }
   }
 
+  public ConcurrentHashMap<Square, Piece> getBoardMap() {
+    return boardMap;
+  }
+
   public void selecClick(int x, int y) {
     Square target = squareMat[x/GRIDSIZE][y/GRIDSIZE];
     if(!target.isOnPieceWay() && !target.isOnCaptured()) {
@@ -65,7 +70,8 @@ public class Board extends GameObject {
       }
     } else{
       boardMap.compute(target, (k, v) -> selPiece);
-      selSquare.movePiece(target);
+      boardMap.remove(selSquare);
+      selPiece.setDestination(target.getX(), target.getY());
       updateValidMove();
       reset();
     }

@@ -44,16 +44,6 @@ public class Square extends GameObject {
     return onPieceWay;
   }
 
-  public void setPiece(Piece piece) {
-    this.piece = piece;
-    this.piece.setDestination(x, y);
-  }
-
-  public void movePiece(Square target){
-    target.setPiece(piece);
-    this.piece = null;
-  }
-
   public void setOnPieceWay(boolean onPieceWay) {
     this.onPieceWay = onPieceWay;
     setColor();
@@ -69,25 +59,10 @@ public class Square extends GameObject {
     setColor();
   }
 
-  public void setPiece(String piece, PApplet app) {
-    if (!piece.equals("")) {
-      this.piece = new Piece(x, y, piece);
-      this.piece.setSprite(app);
-    } else {
-      this.piece = null;
-    }
-  }
-
-  public Piece getPiece(){
-    return this.piece;
-  }
 
   public void onSelected() {
     this.selected = true;
     setColor();
-    if(piece != null){
-      piece.onSelected();
-    }
   } 
 
   public boolean isOnCaptured() {
