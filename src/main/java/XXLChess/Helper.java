@@ -9,6 +9,14 @@ public class Helper {
   private JSONObject config;
   public void setConfig(JSONObject config) { this.config = config; }
 
+  public void initTime(JSONObject config, Clock player1, Clock player2) {
+    JSONObject timeConfig = config.getJSONObject("time_controls");
+    JSONObject player1Time = timeConfig.getJSONObject("player");
+    JSONObject player2Time = timeConfig.getJSONObject("cpu");
+    player1.setConfig(player1Time.getInt("seconds"), player1Time.getInt("increment")); 
+    player2.setConfig(player2Time.getInt("seconds"), player2Time.getInt("increment")); 
+  }
+
   public String[][] loadBoard() {
     int gridSize = 14;
     String[][] arr = new String[gridSize][gridSize];

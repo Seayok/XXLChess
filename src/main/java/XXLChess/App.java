@@ -4,7 +4,7 @@ package XXLChess;
 // import org.reflections.scanners.Scanners;
 // import java.awt.Font;
 import java.io.*;
-import java.util.*;
+//import java.util.*;
 // import java.util.concurrent.ConcurrentHashMap;
 // import java.util.concurrent.TimeUnit;
 import processing.core.PApplet;
@@ -30,12 +30,14 @@ public class App extends PApplet {
 
   public Board board;
 
-  public Timer timer;
+  public Clock clockWhite;
+  public Clock clockBlack;
   public Helper helper;
 
   public App() {
+    this.clockWhite = new Clock(690, 634);
+    this.clockBlack = new Clock(690, 56);
     this.configPath = "config.json";
-    this.timer = new Timer();
     this.helper = new Helper();
   }
 
@@ -60,6 +62,8 @@ public class App extends PApplet {
     helper.setConfig(conf);
     this.board = new Board(helper.loadBoard(), this);
     Board.updateMoveStatus(conf);
+    helper.initTime(conf, clockWhite, clockBlack);
+    clockWhite.start(this);
   }
 
   /**
@@ -74,7 +78,18 @@ public class App extends PApplet {
 
   @Override
   public void mouseClicked(MouseEvent e) {
-    board.onClick(e.getX(), e.getY());
+    board.onClick(e.getX(), e.getY(), this);
+    boolean switchedTurn = board.switchedTurn();
+    if(switchedTurn && board.isWhiteTurn()){
+      clockWhite.start(this);
+      clockBlack.stop();
+      board.unSwitchTurn();
+    }
+    if(switchedTurn && !board.isWhiteTurn()){
+      clockBlack.start(this);
+      clockWhite.stop();
+      board.unSwitchTurn();
+    }
   }
 
   @Override
@@ -86,6 +101,8 @@ public class App extends PApplet {
   public void draw() { 
     background(155);
     board.draw(this); 
+    clockBlack.draw(this);
+    clockWhite.draw(this);
   }
 
   // Add any additional methods or attributes you want. Please put classes in
