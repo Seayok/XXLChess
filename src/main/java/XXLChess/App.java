@@ -28,17 +28,21 @@ public class App extends PApplet {
 
   public String configPath;
 
+  public Game game;
   public Board board;
-
   public Clock clockWhite;
   public Clock clockBlack;
+  public Player player1;
+  public Player player2;
   public Helper helper;
+  public Message textBox;
 
   public App() {
-    this.clockWhite = new Clock(690, 634);
-    this.clockBlack = new Clock(690, 56);
+    this.player1 = new Player();
+    this.player2 = new Player();
     this.configPath = "config.json";
     this.helper = new Helper();
+    this.textBox = new Message(680, 300, 48);
   }
 
   /**
@@ -60,16 +64,29 @@ public class App extends PApplet {
     // load config
     JSONObject conf = loadJSONObject(new File(this.configPath));
     helper.setConfig(conf);
-    this.board = new Board(helper.loadBoard(), this);
-    Board.updateMoveStatus(conf);
-    helper.initTime(conf, clockWhite, clockBlack);
+    helper.initTimeAndSide(player1, player2);
+    helper.updateMoveStatus(conf, player1.isWhite());
+    clockWhite = player1.isWhite()? player1.getClock():player2.getClock(); 
+    clockBlack = player1.isWhite()? player2.getClock():player1.getClock(); 
     clockWhite.start(this);
+    clockBlack.stop(false);
+    board = new Board(helper.loadBoard(), this);
+    game = new Game(board, this, player1, player2, clockBlack, clockWhite, textBox);
   }
 
   /**
    * Receive key pressed signal from the keyboard.
    */
-  public void keyPressed() {}
+  public void keyPressed() {
+    if(key == 'r') {
+      textBox.hide();
+      setup();
+    }
+    if(key == ESC) {
+      key = 0;
+      game.resign();
+    }
+  }
 
   /**
    * Receive key released signal from the keyboard.
@@ -78,18 +95,7 @@ public class App extends PApplet {
 
   @Override
   public void mouseClicked(MouseEvent e) {
-    board.onClick(e.getX(), e.getY(), this);
-    boolean switchedTurn = board.switchedTurn();
-    if(switchedTurn && board.isWhiteTurn()){
-      clockWhite.start(this);
-      clockBlack.stop();
-      board.unSwitchTurn();
-    }
-    if(switchedTurn && !board.isWhiteTurn()){
-      clockBlack.start(this);
-      clockWhite.stop();
-      board.unSwitchTurn();
-    }
+    game.mouseClicked(e.getX(), e.getY());
   }
 
   @Override
@@ -98,8 +104,9 @@ public class App extends PApplet {
   /**
    * Draw all elements in the game by current frame.
    */
-  public void draw() { 
+  public void draw() {
     background(155);
+    textBox.draw(this);
     board.draw(this); 
     clockBlack.draw(this);
     clockWhite.draw(this);
@@ -107,6 +114,9 @@ public class App extends PApplet {
 
   // Add any additional methods or attributes you want. Please put classes in
   // different files.
+  public void updateGameStatus(int status) {
+    game.updateGameStatus(status);
+  }
 
   public static void main(String[] args) { PApplet.main("XXLChess.App"); }
 }

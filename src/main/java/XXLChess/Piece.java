@@ -9,7 +9,7 @@ import processing.core.PApplet;
 import processing.core.PImage;
 
 
-public class Piece extends MovingObject {
+public class Piece extends GameObject {
   public static final int GRIDNUM = Board.GRIDNUM;
   public static final int GRIDSIZE = Board.GRIDSIZE;
   // public static final double BUFFER_SPEED = 0.5;
@@ -22,11 +22,14 @@ public class Piece extends MovingObject {
   public static final int[] Y_DIAGONAL_DIRECTION = {-1, -1, 1, 1}; 
   public static final int[] X_DIAGONAL_DIRECTION = {1, -1, -1, 1};
   private static double  movementSpeed;
+  private static int pawnDirection;
   private static int movementTime;
 
   private double overrideSpeed;
   private float xDest;
   private float yDest;
+  private boolean updatedMoveSet;
+  private Square curSquare;
   private boolean isMoved;
   private double direction;
   private String code;
@@ -36,8 +39,9 @@ public class Piece extends MovingObject {
   private ArrayList<Square> preLegalMove = new ArrayList<Square>();
   private boolean isWhite;
 
-  public Piece(int x, int y, String code) {
+  public Piece(int x, int y, String code, Square curSquare) {
     super(x, y);
+    this.curSquare = curSquare;
     xDest = x;
     yDest = y;
     direction = 0;
@@ -48,9 +52,11 @@ public class Piece extends MovingObject {
       this.isWhite = false;
     }
     this.overrideSpeed = 0;
+    isMoved = false;
   }
 
-  public static void setMoveStat(double movementSpeed, int movementTime) {
+  public static void setMoveStat(double movementSpeed, int movementTime, int pawnDirection) {
+    Piece.pawnDirection = pawnDirection;
     Piece.movementSpeed = movementSpeed;
     Piece.movementTime = movementTime;
   }
@@ -66,11 +72,15 @@ public class Piece extends MovingObject {
     this.sprite.resize(GRIDSIZE, GRIDSIZE);
   }
 
-  public ArrayList<Square> getValidMove() {
+  public Square getSquare() {
+    return curSquare;
+  }
+
+  public List<Square> getValidMove() {
     return validMove;
   }
   
-  public ArrayList<Square> getValidCapture() {
+  public List<Square> getValidCapture() {
     return validCapture;
   }
 
@@ -113,7 +123,7 @@ public class Piece extends MovingObject {
     }
   }
 
-  public boolean getWhitePieces() {
+  public boolean isWhitePiece() {
     return isWhite;
   }
   
@@ -132,7 +142,7 @@ public class Piece extends MovingObject {
             validMove.add(s);
           }
         } else {
-          if(boardMap.get(s).getWhitePieces() != this.isWhite) {
+          if(boardMap.get(s).isWhitePiece() != this.isWhite) {
             if(!(this.code.toLowerCase().contains("p") && xdir == 0)){
               validCapture.add(s);
             }
@@ -144,6 +154,9 @@ public class Piece extends MovingObject {
   }
   
   public void updateValidMove(Board curBoard) {
+    if(updatedMoveSet){
+      return;
+    }
     preLegalMove.removeAll(preLegalMove);
     validCapture.removeAll(validCapture);
     validMove.removeAll(validMove);
@@ -152,6 +165,7 @@ public class Piece extends MovingObject {
       if(code.equals("wp")){ 
         dir = -1;
       }
+      dir *= pawnDirection;
       int range = 1; 
       if(((int)yDest/GRIDSIZE == 1 && !isWhite )||((int)yDest/GRIDSIZE == GRIDNUM - 2 && isWhite)) 
         range = 2;
@@ -175,7 +189,8 @@ public class Piece extends MovingObject {
     
     if(code.equals("K") || code.equals("wk")) {
       setKingMove(curBoard);
-      setCastleMove(curBoard);
+      if(!this.isMoved && curBoard.isWhiteTurn() == isWhite)
+        setCastleMove(curBoard);
     }
 
     if(code.equals("G") || code.equals("wg")) {
@@ -213,53 +228,65 @@ public class Piece extends MovingObject {
   }
 
   public void setCastleMove(Board curBoard) {
+    int kingX = 7;
+    int rightRookX = 13;
+    int leftRookX = 0;
     Square[][] squares = curBoard.getSquareMat();
     ConcurrentHashMap<Square, Piece> boardMap = curBoard.getBoardMap();
-    Square rookRight = squares[(int)xDest/GRIDSIZE][13];
-    Square rookLeft = squares[(int)xDest/GRIDSIZE][0];
-    if(!this.isMoved && boardMap.contains(rookLeft) && !boardMap.get(rookLeft).isMoved()) {
-    }
-    if(!this.isMoved && !boardMap.get(rookRight).isMoved() && boardMap.contains(rookRight)){
-
+    Square rook[] = new Square[2];
+    rook[0] = squares[rightRookX][(int)yDest/GRIDSIZE];
+    rook[1] = squares[leftRookX][(int)yDest/GRIDSIZE];
+    for(int i = 0; i < 2; i++) {
+      Square rookCur = rook[i];
+      if(boardMap.containsKey(rookCur) && !boardMap.get(rookCur).isMoved()) {
+        boolean pieceBetween = false;
+        int lowerBound = (i == 0)?kingX + 1:leftRookX + 1;
+        int upperBound = (i == 0)?rightRookX:kingX;
+        int offset = (i == 0)?1:-1;
+        for(int j = lowerBound; j < upperBound; j++) {
+          Square s = squares[j][(int)yDest/GRIDSIZE];
+          Piece p = boardMap.get(s);
+          if(p != null || curBoard.squareUnderAttack(isWhite, s, false) != null) {
+            pieceBetween = true;
+            break;
+          }
+        }
+        if(!pieceBetween && curBoard.squareUnderAttack(isWhite, curSquare, false) == null) {
+          Square square = squares[(int)xDest/GRIDSIZE + 2*offset][(int)yDest/GRIDSIZE];
+          validMove.add(square);
+        }
+      }
     }
   }
 
   public void removeIllegalMove(Board curBoard) {
-    ArrayList<Square> illegalMoves = new ArrayList<Square>();
+    if(updatedMoveSet){
+      return;
+    }
+    List<Square> illegalMoves = new ArrayList<Square>();
     ConcurrentHashMap<Square, Piece> boardMap = curBoard.getBoardMap();
     Square[][] squareMat = curBoard.getSquareMat();
     for(Square s : preLegalMove) {
       Piece p = boardMap.get(s);
       Square oldSquare = squareMat[(int)xDest/GRIDSIZE][(int)yDest/GRIDSIZE];
       boardMap.compute(s, (k, v) -> this);
+      this.curSquare = s;
       boardMap.remove(oldSquare);
-      if(!Piece.checkKing(curBoard, this.isWhite)) {
+      if(curBoard.squareUnderAttack(this.isWhite, curBoard.getKing().getSquare(), true) != null) {
         illegalMoves.add(s);
       }
+      this.curSquare = oldSquare;
       boardMap.put(oldSquare, this);
       boardMap.compute(s, (k, v) -> p);
     }
     validMove.removeAll(illegalMoves);
     validCapture.removeAll(illegalMoves);
+    updatedMoveSet = true;
   }
 
 
-  /*
-   * Check if the king is being checked
-   */
-  public static boolean checkKing(Board curBoard, boolean isWhite) {
-    ConcurrentHashMap<Square, Piece> boardMap = curBoard.getBoardMap();
-    for(Piece p : boardMap.values()) {
-      if(p.getWhitePieces() != isWhite) {
-        p.updateValidMove(curBoard);
-        for(Square s : p.getValidCapture()) {
-          if(boardMap.get(s).getCode().toLowerCase().contains("k")){
-            return false;
-          }
-        }
-      }
-    }
-    return true;
+  public List<Square> getPreLegalMove(){
+    return preLegalMove;
   }
 
   public void setHorseMove(Board curBoard, int range) {
@@ -275,16 +302,12 @@ public class Piece extends MovingObject {
           Square s = squares[xRes][yRes];
           if(!boardMap.containsKey(s)) {
             validMove.add(s);
-          } else if(boardMap.get(s).getWhitePieces() != this.isWhite){
+          } else if(boardMap.get(s).isWhitePiece() != this.isWhite){
             validCapture.add(s);
           }
         }
       }
     }
-  }
-
-  public boolean checkPreLegalMove(Square s) {
-    return preLegalMove.contains(s);
   }
   
   public void setRookMove(Board curBoard) {
@@ -314,9 +337,10 @@ public class Piece extends MovingObject {
     }
   }
 
-  public void setDestination(float x, float y){
-    this.xDest = x;
-    this.yDest = y;
+  public void setDestination(Square target){
+    this.curSquare = target;
+    this.xDest = target.getX();
+    this.yDest = target.getY();
     this.direction = Math.atan2(yDest - this.y, xDest - this.x);
     double distance = Math.sqrt(Math.pow(xDest - this.x, 2) + Math.pow(yDest - this.y, 2));
     double time = distance/movementSpeed;
@@ -331,6 +355,14 @@ public class Piece extends MovingObject {
 
   public float getDesY() {
     return yDest;
+  }
+
+  public boolean checkPreLegalMove(Square s) {
+    return preLegalMove.contains(s);
+  }
+  
+  public void newMoveSet(){
+    this.updatedMoveSet = false;
   }
 
   public void promotion(PApplet app){
@@ -349,9 +381,6 @@ public class Piece extends MovingObject {
    * @param app The window to draw onto.
    */
   public void draw(PApplet app) {
-    // The image() method is used to draw PImages onto the screen.
-    // The first argument is the image, the second and third arguments are
-    // coordinates
     tick();
     app.image(this.sprite, this.x, this.y);
   }

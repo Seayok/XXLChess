@@ -23,19 +23,25 @@ public class Clock extends GameObject{
         counting = true;
     } 
 
-    public void stop() {
+
+    public void stop(boolean temporary) {
+        if(temporary)
+            countdown += increment;
         counting = false;
-        countdown += increment;
     }
 
-    public void tick(PApplet app) {
+    public void tick(PApplet applet) {
+        App app = (App) applet;
        if(counting) {
             if(timer.complete(app)){
                 countdown -= 1;
+                if(countdown == 0){
+                    app.updateGameStatus(4);
+                }
                 timer.start(app);
             }
        } 
-    }
+    } 
     
     @Override
     public void draw(PApplet app) {

@@ -6,6 +6,7 @@ public abstract class GameObject {
 
   protected float y;
 
+
   /**
    * Creates a new Game object.
    *

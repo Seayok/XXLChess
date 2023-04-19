@@ -1,8 +1,7 @@
-illegal move is not displayed how can we tell if the player clicked on the illegal move?
-nhap thanh
-game ended
-check flashing for 3 seconds
-AI + readfile to to choose side
+interface;
+enum class
+style Guide
+AI
 testcase
 Report + UML +Comments + Style
 Extension
