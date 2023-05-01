@@ -23,6 +23,7 @@ public class Square extends GameObject {
   private boolean kingChecked;
   private boolean onCaptureway;
   private int[] color;
+
   /**
    * Creates a new square with coordinates and colors
    */
@@ -30,27 +31,25 @@ public class Square extends GameObject {
     super(x * SQUARESIZE, y * SQUARESIZE);
     color = new int[3];
   }
-  
 
   public void setColor() {
-    if (selected){
+    if (selected) {
       color = DARK_GREEN;
-    } else if (kingChecked){
+    } else if (kingChecked) {
       color = DARK_RED;
-    } else if(onPieceWay) {
+    } else if (onPieceWay) {
       color = LIGHT_BlUE;
-    } else if(onCaptureway) {
+    } else if (onCaptureway) {
       color = LIGHT_RED;
     } else if (prevMove) {
       color = LIGHT_GREEN;
-    }
-    else {
+    } else {
       color = LIGHT_BROWN;
     }
     return;
   }
 
-  public void setKingChecked(boolean check){
+  public void setKingChecked(boolean check) {
     this.kingChecked = check;
   }
 
@@ -90,37 +89,37 @@ public class Square extends GameObject {
 
   public void onSelected() {
     this.selected = true;
-  } 
+  }
 
   public boolean isOnCaptured() {
     return onCaptureway;
   }
-  
+
   public void tick() {
-    if(numFlashes > 0) {
-      if(curCoolDown == 0){
-        if(numFlashes != 1)
+    if (numFlashes > 0) {
+      if (curCoolDown == 0) {
+        if (numFlashes != 1) {
           curCoolDown = flashDuration;
+        }
         numFlashes--;
       } else {
         curCoolDown--;
         this.setKingChecked(numFlashes % 2 == 1);
       }
-    } 
+    }
     setColor();
   }
 
-  
   public void draw(PApplet app) {
     // Draw square
     tick();
     app.noStroke();
     app.fill(color[0], color[1], color[2]);
     app.rect(this.x, this.y, SQUARESIZE, SQUARESIZE);
-    if((x + y)/48 % 2 == 1){
+    if ((x + y) / 48 % 2 == 1) {
       app.noStroke();
       app.fill(60, 10, 0, 100);
-      app.rect(this.x, this.y , SQUARESIZE, SQUARESIZE);
+      app.rect(this.x, this.y, SQUARESIZE, SQUARESIZE);
     }
   }
 }

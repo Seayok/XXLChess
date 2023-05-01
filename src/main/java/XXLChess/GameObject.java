@@ -1,11 +1,12 @@
 package XXLChess;
+
 import processing.core.PApplet;
+
 public abstract class GameObject {
 
   protected float x;
 
   protected float y;
-
 
   /**
    * Creates a new Game object.
@@ -22,13 +23,19 @@ public abstract class GameObject {
 
   /**
    * Gets the x-coordinate.
+   *
    * @return The x-coordinate.
    */
-  public float getX() { return this.x; }
+  public float getX() {
+    return this.x;
+  }
 
   /**
    * Returns the y-coordinate.
+   *
    * @return The y-coordinate.
    */
-  public float getY() { return this.y; }
+  public float getY() {
+    return this.y;
+  }
 }

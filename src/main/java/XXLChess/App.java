@@ -3,10 +3,10 @@ package XXLChess;
 // import org.reflections.Reflections;
 // import org.reflections.scanners.Scanners;
 // import java.awt.Font;
-import java.io.*;
-//import java.util.*;
+// import java.util.*;
 // import java.util.concurrent.ConcurrentHashMap;
 // import java.util.concurrent.TimeUnit;
+import java.io.File;
 import processing.core.PApplet;
 // import processing.core.PFont;
 // import processing.core.PImage;
@@ -48,11 +48,13 @@ public class App extends PApplet {
   /**
    * Initialise the setting of the window size.
    */
-  public void settings() { size(WIDTH, HEIGHT); }
+  public void settings() {
+    size(WIDTH, HEIGHT);
+  }
 
   /**
-   * Load all resources such as images. Initialise the elements such as the
-   * player, enemies and map elements.
+   * Load all resources such as images. Initialise the elements such as the player, enemies and map
+   * elements.
    */
   public void setup() {
     frameRate(FPS);
@@ -66,8 +68,8 @@ public class App extends PApplet {
     helper.setConfig(conf);
     helper.initTimeAndSide(player1, player2);
     helper.updateMoveStatus(conf, player1.isWhite());
-    clockWhite = player1.isWhite()? player1.getClock():player2.getClock(); 
-    clockBlack = player1.isWhite()? player2.getClock():player1.getClock(); 
+    clockWhite = player1.isWhite() ? player1.getClock() : player2.getClock();
+    clockBlack = player1.isWhite() ? player2.getClock() : player1.getClock();
     clockWhite.start(this);
     clockBlack.stop(false);
     board = new Board(helper.loadBoard(), this);
@@ -78,11 +80,11 @@ public class App extends PApplet {
    * Receive key pressed signal from the keyboard.
    */
   public void keyPressed() {
-    if(key == 'r') {
+    if (key == 'r') {
       textBox.hide();
       setup();
     }
-    if(key == ESC) {
+    if (key == ESC) {
       key = 0;
       game.resign();
     }
@@ -107,7 +109,7 @@ public class App extends PApplet {
   public void draw() {
     background(155);
     textBox.draw(this);
-    board.draw(this); 
+    board.draw(this);
     clockBlack.draw(this);
     clockWhite.draw(this);
   }
@@ -118,5 +120,7 @@ public class App extends PApplet {
     game.updateGameStatus(status);
   }
 
-  public static void main(String[] args) { PApplet.main("XXLChess.App"); }
+  public static void main(String[] args) {
+    PApplet.main("XXLChess.App");
+  }
 }

@@ -1,10 +1,9 @@
 package XXLChess;
 
-import java.util.List;
-import java.util.Arrays;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
-
 import processing.core.PApplet;
 import processing.core.PImage;
 
@@ -17,17 +16,17 @@ public class Piece extends GameObject {
   public static final int DIRECTION_NUMBER = 4;
   public static final int HORSE_RANGE = 2;
   public static final int CAMEL_RANGE = 3;
-  public static final int[] Y_STRAIGHT_DIRECTION = {-1, 0, 1, 0}; 
+  public static final int[] Y_STRAIGHT_DIRECTION = {-1, 0, 1, 0};
   public static final int[] X_STRAIGHT_DIRECTION = {0, 1, 0, -1};
-  public static final int[] Y_DIAGONAL_DIRECTION = {-1, -1, 1, 1}; 
+  public static final int[] Y_DIAGONAL_DIRECTION = {-1, -1, 1, 1};
   public static final int[] X_DIAGONAL_DIRECTION = {1, -1, -1, 1};
-  private static double  movementSpeed;
+  private static double movementSpeed;
   private static int pawnDirection;
   private static int movementTime;
 
   private double overrideSpeed;
-  private float xDest;
-  private float yDest;
+  private float destX;
+  private float destY;
   private boolean updatedMoveSet;
   private Square curSquare;
   private boolean isMoved;
@@ -42,11 +41,11 @@ public class Piece extends GameObject {
   public Piece(int x, int y, String code, Square curSquare) {
     super(x, y);
     this.curSquare = curSquare;
-    xDest = x;
-    yDest = y;
+    destX = x;
+    destY = y;
     direction = 0;
     this.code = code;
-    if(code.charAt(0) == 'w') {
+    if (code.charAt(0) == 'w') {
       this.isWhite = true;
     } else {
       this.isWhite = false;
@@ -79,7 +78,7 @@ public class Piece extends GameObject {
   public List<Square> getValidMove() {
     return validMove;
   }
-  
+
   public List<Square> getValidCapture() {
     return validCapture;
   }
@@ -96,29 +95,29 @@ public class Piece extends GameObject {
     return isMoved;
   }
 
-  public void displayMoveSet(){
-    for(Square s : validMove) {
+  public void displayMoveSet() {
+    for (Square s : validMove) {
       s.setOnPieceWay(true);
     }
-    for(Square s : validCapture) {
+    for (Square s : validCapture) {
       s.setOnCapture(true);
     }
   }
 
   public void tick() {
     double movementSpeed = Piece.movementSpeed;
-    if(overrideSpeed > 0){
+    if (overrideSpeed > 0) {
       movementSpeed = overrideSpeed;
     }
-    float xDist = this.x - xDest;
-    float yDist = this.y - yDest;
-    double distance = Math.sqrt(Math.pow(xDist, 2) + Math.pow(yDist, 2));
-    if(distance > movementSpeed){
+    float distX = this.x - destX;
+    float distY = this.y - destY;
+    double distance = Math.sqrt(Math.pow(distX, 2) + Math.pow(distY, 2));
+    if (distance > movementSpeed) {
       this.x += Math.cos(direction) * movementSpeed;
       this.y += Math.sin(direction) * movementSpeed;
     } else {
-      this.x = this.xDest;
-      this.y = this.yDest;
+      this.x = this.destX;
+      this.y = this.destY;
       overrideSpeed = 0;
     }
   }
@@ -126,98 +125,101 @@ public class Piece extends GameObject {
   public boolean isWhitePiece() {
     return isWhite;
   }
-  
-  public void straightMove(Board curBoard, int xdir, int ydir, int range) {
+
+  public void straightMove(Board curBoard, int dirX, int dirY, int range) {
     Square[][] squares = curBoard.getSquareMat();
     ConcurrentHashMap<Square, Piece> boardMap = curBoard.getBoardMap();
-    for(int i = 1; i <= range; i++) {
-      int xChange = i * xdir;
-      int yChange = i * ydir;
-      int xRes = (int)xDest / GRIDSIZE + xChange;
-      int yRes = (int)yDest / GRIDSIZE + yChange;
-      if(xRes >= 0 && xRes < GRIDNUM && (xChange != 0 || yChange != 0) && yRes >= 0 && yRes < GRIDNUM) {
-        Square s = squares[xRes][yRes];
-        if(!boardMap.containsKey(s)) {
-          if(!(this.code.toLowerCase().contains("p") && xdir != 0)){
+    for (int i = 1; i <= range; i++) {
+      int changeX = i * dirX;
+      int changeY = i * dirY;
+      int resX = (int) destX / GRIDSIZE + changeX;
+      int resY = (int) destY / GRIDSIZE + changeY;
+      if (resX >= 0 && resX < GRIDNUM && (changeX != 0 || changeY != 0) && resY >= 0
+          && resY < GRIDNUM) {
+        Square s = squares[resX][resY];
+        if (!boardMap.containsKey(s)) {
+          if (!(this.code.toLowerCase().contains("p") && dirX != 0)) {
             validMove.add(s);
           }
         } else {
-          if(boardMap.get(s).isWhitePiece() != this.isWhite) {
-            if(!(this.code.toLowerCase().contains("p") && xdir == 0)){
+          if (boardMap.get(s).isWhitePiece() != this.isWhite) {
+            if (!(this.code.toLowerCase().contains("p") && dirX == 0)) {
               validCapture.add(s);
             }
-          }  
+          }
           break;
         }
       }
     }
   }
-  
+
   public void updateValidMove(Board curBoard) {
-    if(updatedMoveSet){
+    if (updatedMoveSet) {
       return;
     }
     preLegalMove.removeAll(preLegalMove);
     validCapture.removeAll(validCapture);
     validMove.removeAll(validMove);
-    if(code.equals("P") || code.equals("wp")) {
+    if (code.equals("P") || code.equals("wp")) {
       int dir = 1;
-      if(code.equals("wp")){ 
+      if (code.equals("wp")) {
         dir = -1;
       }
       dir *= pawnDirection;
-      int range = 1; 
-      if(((int)yDest/GRIDSIZE == 1 && !isWhite )||((int)yDest/GRIDSIZE == GRIDNUM - 2 && isWhite)) 
+      int range = 1;
+      if (((int) destY / GRIDSIZE == 1 && !isWhite)
+          || ((int) destY / GRIDSIZE == GRIDNUM - 2 && isWhite)) {
         range = 2;
+      }
       straightMove(curBoard, 0, dir, range);
       straightMove(curBoard, dir, dir, 1);
       straightMove(curBoard, -dir, dir, 1);
-    } 
-    
-    if(code.equals("R") || code.equals("wr")) {
+    }
+
+    if (code.equals("R") || code.equals("wr")) {
       setRookMove(curBoard);
     }
 
-
-    if(code.equals("B") || code.equals("wb")) {
+    if (code.equals("B") || code.equals("wb")) {
       setBishopMove(curBoard);
     }
 
-    if(code.equals("N") || code.equals("wn")) {
+    if (code.equals("N") || code.equals("wn")) {
       setHorseMove(curBoard, HORSE_RANGE);
     }
-    
-    if(code.equals("K") || code.equals("wk")) {
+
+    if (code.equals("K") || code.equals("wk")) {
       setKingMove(curBoard);
-      if(!this.isMoved && curBoard.isWhiteTurn() == isWhite)
+      if (!this.isMoved && curBoard.isWhiteTurn() == isWhite) {
         setCastleMove(curBoard);
+      }
     }
 
-    if(code.equals("G") || code.equals("wg")) {
+    if (code.equals("G") || code.equals("wg")) {
       setKingMove(curBoard);
       setHorseMove(curBoard, HORSE_RANGE);
     }
 
-    if(code.equals("E") || code.equals("we")) {
+    if (code.equals("E") || code.equals("we")) {
       setHorseMove(curBoard, HORSE_RANGE);
       setRookMove(curBoard);
     }
 
-    if(code.equals("H") || code.equals("wh")) {
+    if (code.equals("H") || code.equals("wh")) {
       setHorseMove(curBoard, HORSE_RANGE);
       setBishopMove(curBoard);
     }
 
-    if(code.equals("C") || code.equals("wc")) {
+    if (code.equals("C") || code.equals("wc")) {
       setHorseMove(curBoard, CAMEL_RANGE);
     }
 
-    if(code.equals("Q") || code.equals("wq")) {
+    if (code.equals("Q") || code.equals("wq")) {
       setBishopMove(curBoard);
       setRookMove(curBoard);
     }
 
-    if(code.equals("A") || code.equals("wa")) {
+    if (code.equals("A") || code.equals("wa")) {
       setBishopMove(curBoard);
       setRookMove(curBoard);
       setHorseMove(curBoard, HORSE_RANGE);
@@ -233,26 +235,26 @@ public class Piece extends GameObject {
     int leftRookX = 0;
     Square[][] squares = curBoard.getSquareMat();
     ConcurrentHashMap<Square, Piece> boardMap = curBoard.getBoardMap();
-    Square rook[] = new Square[2];
-    rook[0] = squares[rightRookX][(int)yDest/GRIDSIZE];
-    rook[1] = squares[leftRookX][(int)yDest/GRIDSIZE];
-    for(int i = 0; i < 2; i++) {
+    Square[] rook = new Square[2];
+    rook[0] = squares[rightRookX][(int) destY / GRIDSIZE];
+    rook[1] = squares[leftRookX][(int) destY / GRIDSIZE];
+    for (int i = 0; i < 2; i++) {
       Square rookCur = rook[i];
-      if(boardMap.containsKey(rookCur) && !boardMap.get(rookCur).isMoved()) {
+      if (boardMap.containsKey(rookCur) && !boardMap.get(rookCur).isMoved()) {
         boolean pieceBetween = false;
-        int lowerBound = (i == 0)?kingX + 1:leftRookX + 1;
-        int upperBound = (i == 0)?rightRookX:kingX;
-        int offset = (i == 0)?1:-1;
-        for(int j = lowerBound; j < upperBound; j++) {
-          Square s = squares[j][(int)yDest/GRIDSIZE];
+        int lowerBound = (i == 0) ? kingX + 1 : leftRookX + 1;
+        int upperBound = (i == 0) ? rightRookX : kingX;
+        int offset = (i == 0) ? 1 : -1;
+        for (int j = lowerBound; j < upperBound; j++) {
+          Square s = squares[j][(int) destY / GRIDSIZE];
           Piece p = boardMap.get(s);
-          if(p != null || curBoard.squareUnderAttack(isWhite, s, false) != null) {
+          if (p != null || curBoard.squareUnderAttack(isWhite, s, false) != null) {
             pieceBetween = true;
             break;
           }
         }
-        if(!pieceBetween && curBoard.squareUnderAttack(isWhite, curSquare, false) == null) {
-          Square square = squares[(int)xDest/GRIDSIZE + 2*offset][(int)yDest/GRIDSIZE];
+        if (!pieceBetween && curBoard.squareUnderAttack(isWhite, curSquare, false) == null) {
+          Square square = squares[(int) destX / GRIDSIZE + 2 * offset][(int) destY / GRIDSIZE];
           validMove.add(square);
         }
       }
@@ -260,19 +262,19 @@ public class Piece extends GameObject {
   }
 
   public void removeIllegalMove(Board curBoard) {
-    if(updatedMoveSet){
+    if (updatedMoveSet) {
       return;
     }
     List<Square> illegalMoves = new ArrayList<Square>();
     ConcurrentHashMap<Square, Piece> boardMap = curBoard.getBoardMap();
     Square[][] squareMat = curBoard.getSquareMat();
-    for(Square s : preLegalMove) {
-      Piece p = boardMap.get(s);
-      Square oldSquare = squareMat[(int)xDest/GRIDSIZE][(int)yDest/GRIDSIZE];
+    for (Square s : preLegalMove) {
+      final Piece p = boardMap.get(s);
+      Square oldSquare = squareMat[(int) destX / GRIDSIZE][(int) destY / GRIDSIZE];
       boardMap.compute(s, (k, v) -> this);
       this.curSquare = s;
       boardMap.remove(oldSquare);
-      if(curBoard.squareUnderAttack(this.isWhite, curBoard.getKing().getSquare(), true) != null) {
+      if (curBoard.squareUnderAttack(this.isWhite, curBoard.getKing().getSquare(), true) != null) {
         illegalMoves.add(s);
       }
       this.curSquare = oldSquare;
@@ -284,97 +286,97 @@ public class Piece extends GameObject {
     updatedMoveSet = true;
   }
 
-
-  public List<Square> getPreLegalMove(){
+  public List<Square> getPreLegalMove() {
     return preLegalMove;
   }
 
   public void setHorseMove(Board curBoard, int range) {
     Square[][] squares = curBoard.getSquareMat();
     ConcurrentHashMap<Square, Piece> boardMap = curBoard.getBoardMap();
-    List<Integer> xChange = Arrays.asList(1, range);
-    List<Integer> yChange = Arrays.asList(range, 1);
-    for(int i = 0; i < DIRECTION_NUMBER; i++) {
-      for(int j = 0; j < xChange.size(); j++) {
-        int xRes = (int)xDest/GRIDSIZE + X_DIAGONAL_DIRECTION[i] * xChange.get(j);
-        int yRes = (int)yDest/GRIDSIZE + Y_DIAGONAL_DIRECTION[i] * yChange.get(j);
-        if(xRes >= 0 && xRes < GRIDNUM && yRes >= 0 && yRes < GRIDNUM){
-          Square s = squares[xRes][yRes];
-          if(!boardMap.containsKey(s)) {
+    List<Integer> changeX = Arrays.asList(1, range);
+    List<Integer> changeY = Arrays.asList(range, 1);
+    for (int i = 0; i < DIRECTION_NUMBER; i++) {
+      for (int j = 0; j < changeX.size(); j++) {
+        int resX = (int) destX / GRIDSIZE + X_DIAGONAL_DIRECTION[i] * changeX.get(j);
+        int resY = (int) destY / GRIDSIZE + Y_DIAGONAL_DIRECTION[i] * changeY.get(j);
+        if (resX >= 0 && resX < GRIDNUM && resY >= 0 && resY < GRIDNUM) {
+          Square s = squares[resX][resY];
+          if (!boardMap.containsKey(s)) {
             validMove.add(s);
-          } else if(boardMap.get(s).isWhitePiece() != this.isWhite){
+          } else if (boardMap.get(s).isWhitePiece() != this.isWhite) {
             validCapture.add(s);
           }
         }
       }
     }
   }
-  
+
   public void setRookMove(Board curBoard) {
-    for(int i = 0; i < DIRECTION_NUMBER; i++) {
-      int xDir = X_STRAIGHT_DIRECTION[i];
-      int yDir = Y_STRAIGHT_DIRECTION[i];
-      straightMove(curBoard, xDir, yDir, GRIDNUM); 
+    for (int i = 0; i < DIRECTION_NUMBER; i++) {
+      int dirX = X_STRAIGHT_DIRECTION[i];
+      int dirY = Y_STRAIGHT_DIRECTION[i];
+      straightMove(curBoard, dirX, dirY, GRIDNUM);
     }
   }
-  
+
   public void setBishopMove(Board curBoard) {
-    for(int i = 0; i < DIRECTION_NUMBER; i++) {
-      int xDir = X_DIAGONAL_DIRECTION[i];
-      int yDir = Y_DIAGONAL_DIRECTION[i];
-      straightMove(curBoard, xDir, yDir, GRIDNUM); 
+    for (int i = 0; i < DIRECTION_NUMBER; i++) {
+      int dirX = X_DIAGONAL_DIRECTION[i];
+      int dirY = Y_DIAGONAL_DIRECTION[i];
+      straightMove(curBoard, dirX, dirY, GRIDNUM);
     }
   }
 
   public void setKingMove(Board curBoard) {
-    for(int i = 0; i < DIRECTION_NUMBER; i++) {
-      int xDir = X_DIAGONAL_DIRECTION[i];
-      int yDir = Y_DIAGONAL_DIRECTION[i];
-      straightMove(curBoard, xDir, yDir, 1); 
-      xDir = X_STRAIGHT_DIRECTION[i];
-      yDir = Y_STRAIGHT_DIRECTION[i];
-      straightMove(curBoard, xDir, yDir, 1);
+    for (int i = 0; i < DIRECTION_NUMBER; i++) {
+      int dirX = X_DIAGONAL_DIRECTION[i];
+      int dirY = Y_DIAGONAL_DIRECTION[i];
+      straightMove(curBoard, dirX, dirY, 1);
+      dirX = X_STRAIGHT_DIRECTION[i];
+      dirY = Y_STRAIGHT_DIRECTION[i];
+      straightMove(curBoard, dirX, dirY, 1);
     }
   }
 
-  public void setDestination(Square target){
+  public void setDestination(Square target) {
     this.curSquare = target;
-    this.xDest = target.getX();
-    this.yDest = target.getY();
-    this.direction = Math.atan2(yDest - this.y, xDest - this.x);
-    double distance = Math.sqrt(Math.pow(xDest - this.x, 2) + Math.pow(yDest - this.y, 2));
-    double time = distance/movementSpeed;
-    if(time >= movementTime * FPS) {
-      overrideSpeed = distance/((movementTime*FPS) - 1);
+    this.destX = target.getX();
+    this.destY = target.getY();
+    this.direction = Math.atan2(destY - this.y, destX - this.x);
+    double distance = Math.sqrt(Math.pow(destX - this.x, 2) + Math.pow(destY - this.y, 2));
+    double time = distance / movementSpeed;
+    if (time >= movementTime * FPS) {
+      overrideSpeed = distance / ((movementTime * FPS) - 1);
     }
   }
 
   public float getDesX() {
-    return xDest;
+    return destX;
   }
 
   public float getDesY() {
-    return yDest;
+    return destY;
   }
 
   public boolean checkPreLegalMove(Square s) {
     return preLegalMove.contains(s);
   }
-  
-  public void newMoveSet(){
+
+  public void newMoveSet() {
     this.updatedMoveSet = false;
   }
 
-  public void promotion(PApplet app){
-    if(this.code.equals("P") && (int)this.yDest/GRIDSIZE == 7){
+  public void promotion(PApplet app) {
+    if (this.code.equals("P") && (int) this.destY / GRIDSIZE == 7) {
       this.code = "Q";
       setSprite(app);
-    } 
-    if(this.code.equals("wp") && (int)this.yDest/GRIDSIZE == 6){
+    }
+    if (this.code.equals("wp") && (int) this.destY / GRIDSIZE == 6) {
       this.code = "wq";
       setSprite(app);
     }
   }
+
   /**
    * Draws the object to the screen.
    *

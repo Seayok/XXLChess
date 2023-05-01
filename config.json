@@ -1,12 +1,12 @@
 {
-  "layout": "level2.txt",
+  "layout": "leveltest.txt",
   "time_controls": {
     "player": {
-      "seconds": 180,
+      "seconds": 18,
       "increment": 2
     },
     "cpu": {
-      "seconds": 180,
+      "seconds": 18,
       "increment": 2
     }
   },
@@ -14,4 +14,3 @@
   "piece_movement_speed": 6.0,
   "max_movement_time": 1
 }
-

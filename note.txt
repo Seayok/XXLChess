@@ -1,4 +1,6 @@
-interface;
+interface
+draw conditions
+change pawn image loader to use queen image;
 enum class
 style Guide
 AI
