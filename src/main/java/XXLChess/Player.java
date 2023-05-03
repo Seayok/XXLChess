@@ -1,5 +1,7 @@
 package XXLChess;
 
+import java.util.Random;
+import java.util.List;
 import processing.core.PApplet;
 import processing.data.JSONObject;
 
@@ -47,5 +49,20 @@ public class Player {
 
   public void startTurn(PApplet app) {
     this.clock.start(app);
+  }
+
+  public int makeRandomMove(Board curBoard, int prevVal) {
+    if (clock.getCountDown() != prevVal) {
+      Random generator = new Random();
+      List<Piece> pieceList = curBoard.getAllMoveablePiece(isWhite);
+      Piece piece = pieceList.get(generator.nextInt(pieceList.size()));
+      List<Square> desSquareList = piece.getValidMove();
+      desSquareList.addAll(piece.getValidCapture());
+      Square destSquare = desSquareList.get(generator.nextInt(desSquareList.size()));
+      curBoard.makeMove(piece, destSquare);
+      return 2;
+    } else {
+      return 0;
+    }
   }
 }

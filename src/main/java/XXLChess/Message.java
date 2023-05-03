@@ -43,6 +43,11 @@ public class Message extends GameObject {
     this.text = "";
   }
 
+  public void drawMessage() {
+    this.text = "Stalemate - draw";
+    this.size = 13;
+  }
+
   @Override
   public void draw(PApplet app) {
     app.fill(255);

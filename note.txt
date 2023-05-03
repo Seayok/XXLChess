@@ -1,9 +1,4 @@
 interface
-draw conditions
-change pawn image loader to use queen image;
-enum class
-style Guide
-AI
 testcase
 Report + UML +Comments + Style
 Extension

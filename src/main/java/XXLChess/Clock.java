@@ -43,6 +43,11 @@ public class Clock extends GameObject {
     }
   }
 
+  public int getCountDown() {
+    return countdown;
+  }
+
+
   @Override
   public void draw(PApplet app) {
     tick(app);

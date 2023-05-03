@@ -33,6 +33,7 @@ public class Piece extends GameObject {
   private double direction;
   private String code;
   private PImage sprite;
+  private PImage queenImage;
   private ArrayList<Square> validMove = new ArrayList<Square>();
   private ArrayList<Square> validCapture = new ArrayList<Square>();
   private ArrayList<Square> preLegalMove = new ArrayList<Square>();
@@ -69,6 +70,10 @@ public class Piece extends GameObject {
     String dir = "src/main/resources/XXLChess/" + code + ".png";
     this.sprite = app.loadImage(dir);
     this.sprite.resize(GRIDSIZE, GRIDSIZE);
+
+    String queencode = code.length() == 1 ? "Q" : "wq";
+    this.queenImage = app.loadImage("src/main/resources/XXLChess/" + queencode + ".png");
+    this.queenImage.resize(GRIDSIZE, GRIDSIZE);
   }
 
   public Square getSquare() {
@@ -160,71 +165,66 @@ public class Piece extends GameObject {
     preLegalMove.removeAll(preLegalMove);
     validCapture.removeAll(validCapture);
     validMove.removeAll(validMove);
-    if (code.equals("P") || code.equals("wp")) {
-      int dir = 1;
-      if (code.equals("wp")) {
-        dir = -1;
-      }
-      dir *= pawnDirection;
-      int range = 1;
-      if (((int) destY / GRIDSIZE == 1 && !isWhite)
-          || ((int) destY / GRIDSIZE == GRIDNUM - 2 && isWhite)) {
-        range = 2;
-      }
-      straightMove(curBoard, 0, dir, range);
-      straightMove(curBoard, dir, dir, 1);
-      straightMove(curBoard, -dir, dir, 1);
-    }
 
-    if (code.equals("R") || code.equals("wr")) {
-      setRookMove(curBoard);
-    }
+    char codePiece = code.toLowerCase().charAt(code.length() - 1);
 
-    if (code.equals("B") || code.equals("wb")) {
-      setBishopMove(curBoard);
+    switch (codePiece) {
+      case 'p':
+        int dir = 1;
+        if (code.equals("wp")) {
+          dir = -1;
+        }
+        dir *= pawnDirection;
+        int range = 1;
+        int rowDest = (int) destY / GRIDSIZE;
+        if ((rowDest == 1 || rowDest == GRIDNUM - 2) && !this.isMoved()) {
+          range = 2;
+        }
+        straightMove(curBoard, 0, dir, range);
+        straightMove(curBoard, dir, dir, 1);
+        straightMove(curBoard, -dir, dir, 1);
+        break;
+      case 'r':
+        setRookMove(curBoard);
+        break;
+      case 'b':
+        setBishopMove(curBoard);
+        break;
+      case 'n':
+        setHorseMove(curBoard, HORSE_RANGE);
+        break;
+      case 'k':
+        setKingMove(curBoard);
+        if (!this.isMoved && curBoard.isWhiteTurn() == isWhite) {
+          setCastleMove(curBoard);
+        }
+        break;
+      case 'g':
+        setKingMove(curBoard);
+        setHorseMove(curBoard, HORSE_RANGE);
+        break;
+      case 'e':
+        setHorseMove(curBoard, HORSE_RANGE);
+        setRookMove(curBoard);
+        break;
+      case 'h':
+        setHorseMove(curBoard, HORSE_RANGE);
+        setBishopMove(curBoard);
+        break;
+      case 'c':
+        setHorseMove(curBoard, CAMEL_RANGE);
+        break;
+      case 'q':
+        setBishopMove(curBoard);
+        setRookMove(curBoard);
+        break;
+      case 'a':
+        setBishopMove(curBoard);
+        setRookMove(curBoard);
+        setHorseMove(curBoard, HORSE_RANGE);
+        break;
+      default:
     }
-
-    if (code.equals("N") || code.equals("wn")) {
-      setHorseMove(curBoard, HORSE_RANGE);
-    }
-
-    if (code.equals("K") || code.equals("wk")) {
-      setKingMove(curBoard);
-      if (!this.isMoved && curBoard.isWhiteTurn() == isWhite) {
-        setCastleMove(curBoard);
-      }
-    }
-
-    if (code.equals("G") || code.equals("wg")) {
-      setKingMove(curBoard);
-      setHorseMove(curBoard, HORSE_RANGE);
-    }
-
-    if (code.equals("E") || code.equals("we")) {
-      setHorseMove(curBoard, HORSE_RANGE);
-      setRookMove(curBoard);
-    }
-
-    if (code.equals("H") || code.equals("wh")) {
-      setHorseMove(curBoard, HORSE_RANGE);
-      setBishopMove(curBoard);
-    }
-
-    if (code.equals("C") || code.equals("wc")) {
-      setHorseMove(curBoard, CAMEL_RANGE);
-    }
-
-    if (code.equals("Q") || code.equals("wq")) {
-      setBishopMove(curBoard);
-      setRookMove(curBoard);
-    }
-
-    if (code.equals("A") || code.equals("wa")) {
-      setBishopMove(curBoard);
-      setRookMove(curBoard);
-      setHorseMove(curBoard, HORSE_RANGE);
-    }
-
     preLegalMove.addAll(validMove);
     preLegalMove.addAll(validCapture);
   }
@@ -248,12 +248,12 @@ public class Piece extends GameObject {
         for (int j = lowerBound; j < upperBound; j++) {
           Square s = squares[j][(int) destY / GRIDSIZE];
           Piece p = boardMap.get(s);
-          if (p != null || curBoard.squareUnderAttack(isWhite, s, false) != null) {
+          if (p != null || curBoard.squareUnderAttack(isWhite, s) != null) {
             pieceBetween = true;
             break;
           }
         }
-        if (!pieceBetween && curBoard.squareUnderAttack(isWhite, curSquare, false) == null) {
+        if (!pieceBetween && curBoard.squareUnderAttack(isWhite, curSquare) == null) {
           Square square = squares[(int) destX / GRIDSIZE + 2 * offset][(int) destY / GRIDSIZE];
           validMove.add(square);
         }
@@ -274,7 +274,7 @@ public class Piece extends GameObject {
       boardMap.compute(s, (k, v) -> this);
       this.curSquare = s;
       boardMap.remove(oldSquare);
-      if (curBoard.squareUnderAttack(this.isWhite, curBoard.getKing().getSquare(), true) != null) {
+      if (curBoard.squareUnderAttack(this.isWhite, curBoard.getKing().getSquare()) != null) {
         illegalMoves.add(s);
       }
       this.curSquare = oldSquare;
@@ -366,14 +366,14 @@ public class Piece extends GameObject {
     this.updatedMoveSet = false;
   }
 
-  public void promotion(PApplet app) {
-    if (this.code.equals("P") && (int) this.destY / GRIDSIZE == 7) {
+  public void promotion() {
+    if (this.code.equals("P") && (int) this.destY / GRIDSIZE == 6 + Math.max(pawnDirection, 0)) {
       this.code = "Q";
-      setSprite(app);
+      this.sprite = this.queenImage;
     }
-    if (this.code.equals("wp") && (int) this.destY / GRIDSIZE == 6) {
+    if (this.code.equals("wp") && (int) this.destY / GRIDSIZE == 7 - Math.max(pawnDirection, 0)) {
       this.code = "wq";
-      setSprite(app);
+      this.sprite = this.queenImage;
     }
   }
 

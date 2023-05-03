@@ -65,7 +65,7 @@ public class Board extends GameObject {
     return 1;
   }
 
-  public int selectClick(int x, int y, App app) {
+  public int selectClick(int x, int y) {
     Square target = squareMat[x / GRIDSIZE][y / GRIDSIZE];
     if (!target.isOnPieceWay() && !target.isOnCaptured()) {
       Square kingSquare = king[whiteTurn ? 1 : 0].getSquare();
@@ -73,48 +73,53 @@ public class Board extends GameObject {
         king[whiteTurn ? 1 : 0].getSquare().setWarning();
         return 3;
       }
-      resetSquares(null);
+      resetSquares(null, null, null);
       if (boardMap.containsKey(target)) {
         return startClick(x, y);
       }
       return 0;
     } else {
-      // Castle
-      float destX = target.getX();
-      float destY = target.getY();
-      if (selPiece.getCode().toLowerCase().contains("k")
-          && Math.abs(destX - selPiece.getDesX()) / 48 == 2) {
-        int offset = (int) ((destX - selPiece.getDesX()) / Math.abs(destX - selPiece.getDesX()));
-        int rookX = (offset == 1) ? 13 : 0;
-        Square rookSquare = squareMat[rookX][(int) destY / 48];
-        Piece rook = boardMap.get(rookSquare);
-        Square newRookSquare = squareMat[(int) destX / 48 - offset][(int) destY / 48];
-        boardMap.remove(rookSquare);
-        rook.setDestination(newRookSquare);
-        boardMap.compute(newRookSquare, (k, v) -> rook);
-        rook.moved();
-      }
-
-      boardMap.compute(target, (k, v) -> selPiece);
-      boardMap.remove(selSquare);
-      selPiece.setDestination(target);
-      selPiece.promotion(app);
-      selPiece.moved();
-      resetSquares(target);
-      whiteTurn = !whiteTurn;
+      makeMove(selPiece, target);
       return 2;
     }
   }
 
-  public List<Square> getAllMoves(boolean isWhite) {
-    List<Square> result = new ArrayList<>();
+  public void makeMove(Piece movePiece, Square target) {
+    float destX = target.getX();
+    float destY = target.getY();
+
+    if (movePiece.getCode().toLowerCase().contains("k")
+        && Math.abs(destX - movePiece.getDesX()) / 48 == 2) {
+      int offset = (int) ((destX - movePiece.getDesX()) / Math.abs(destX - movePiece.getDesX()));
+      int rookX = (offset == 1) ? 13 : 0;
+      Square rookSquare = squareMat[rookX][(int) destY / 48];
+      Piece rook = boardMap.get(rookSquare);
+      Square newRookSquare = squareMat[(int) destX / 48 - offset][(int) destY / 48];
+      boardMap.remove(rookSquare);
+      rook.setDestination(newRookSquare);
+      boardMap.compute(newRookSquare, (k, v) -> rook);
+      rook.moved();
+    }
+    Square curSquare = movePiece.getSquare();
+    boardMap.compute(target, (k, v) -> movePiece);
+    boardMap.remove(movePiece.getSquare());
+    movePiece.setDestination(target);
+    movePiece.promotion();
+    movePiece.moved();
+    resetSquares(curSquare, movePiece, target);
+    whiteTurn = !whiteTurn;
+  }
+
+  public List<Piece> getAllMoveablePiece(boolean isWhite) {
+    List<Piece> result = new ArrayList<>();
     List<Piece> allPieces = new ArrayList<>(boardMap.values());
     for (Piece p : allPieces) {
       if (p.isWhitePiece() == isWhite) {
         p.updateValidMove(this);
         p.removeIllegalMove(this);
-        result.addAll(p.getValidMove());
-        result.addAll(p.getValidCapture());
+        if (p.getValidCapture().size() > 0 || p.getValidMove().size() > 0) {
+          result.add(p);
+        }
       }
     }
     return result;
@@ -122,7 +127,7 @@ public class Board extends GameObject {
 
   public boolean checkCheck() {
     Square kingSquare = king[whiteTurn ? 1 : 0].getSquare();
-    boolean checked = squareUnderAttack(whiteTurn, kingSquare, true) == null;
+    boolean checked = squareUnderAttack(whiteTurn, kingSquare) == null;
     kingSquare.setKingChecked(!checked);
     if (!checked) {
       return true;
@@ -132,7 +137,7 @@ public class Board extends GameObject {
   }
 
   public boolean checkCheckMate() {
-    return getAllMoves(whiteTurn).size() == 0;
+    return getAllMoveablePiece(whiteTurn).size() == 0;
   }
 
   public void displayCheckMatePiece() {
@@ -142,11 +147,11 @@ public class Board extends GameObject {
     kingSquares.add(kingPiece.getSquare());
     for (Square s : kingSquares) {
       // s.setOnCapture(true);
-      Piece p = squareUnderAttack(whiteTurn, s, false);
+      Piece p = squareUnderAttack(whiteTurn, s);
       if (p == null) {
         Piece prevPiece = boardMap.get(s);
         boardMap.remove(s);
-        p = squareUnderAttack(whiteTurn, s, true);
+        p = squareUnderAttack(whiteTurn, s);
         boardMap.compute(s, (k, v) -> prevPiece);
       }
       System.out.print(s.getX() / 48 + " " + s.getY() / 48 + " ");
@@ -158,7 +163,7 @@ public class Board extends GameObject {
     }
   }
 
-  public void resetSquares(Square target) {
+  public void resetSquares(Square curSquare, Piece piece, Square target) {
     for (int i = 0; i < GRIDNUM; i++) {
       for (int j = 0; j < GRIDNUM; j++) {
         Square square = squareMat[i][j];
@@ -172,15 +177,15 @@ public class Board extends GameObject {
       }
     }
     if (target != null) {
-      selSquare.setPrevMove(true);
+      curSquare.setPrevMove(true);
       target.setPrevMove(true);
     }
-    selSquare.deselect();
+    curSquare.deselect();
     selPiece = null;
     selSquare = null;
   }
 
-  public Piece squareUnderAttack(boolean isWhite, Square target, boolean moved) {
+  public Piece squareUnderAttack(boolean isWhite, Square target) {
     for (Piece p : boardMap.values()) {
       if (p.isWhitePiece() != isWhite) {
         p.updateValidMove(this);

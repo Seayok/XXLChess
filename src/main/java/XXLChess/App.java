@@ -84,8 +84,7 @@ public class App extends PApplet {
       textBox.hide();
       setup();
     }
-    if (key == ESC) {
-      key = 0;
+    if (key == 'e') {
       game.resign();
     }
   }
@@ -108,6 +107,7 @@ public class App extends PApplet {
    */
   public void draw() {
     background(155);
+    game.draw(this);
     textBox.draw(this);
     board.draw(this);
     clockBlack.draw(this);
