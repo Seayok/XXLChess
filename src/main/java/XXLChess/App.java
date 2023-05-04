@@ -1,16 +1,7 @@
 package XXLChess;
 
-// import org.reflections.Reflections;
-// import org.reflections.scanners.Scanners;
-// import java.awt.Font;
-// import java.util.*;
-// import java.util.concurrent.ConcurrentHashMap;
-// import java.util.concurrent.TimeUnit;
 import java.io.File;
 import processing.core.PApplet;
-// import processing.core.PFont;
-// import processing.core.PImage;
-// import processing.data.JSONArray;
 import processing.data.JSONObject;
 import processing.event.MouseEvent;
 
@@ -95,7 +86,7 @@ public class App extends PApplet {
   public void keyReleased() {}
 
   @Override
-  public void mouseClicked(MouseEvent e) {
+  public void mousePressed(MouseEvent e) {
     game.mouseClicked(e.getX(), e.getY());
   }
 

@@ -73,7 +73,7 @@ public class Board extends GameObject {
         king[whiteTurn ? 1 : 0].getSquare().setWarning();
         return 3;
       }
-      resetSquares(null, null, null);
+      resetSquares(selSquare, null, null);
       if (boardMap.containsKey(target)) {
         return startClick(x, y);
       }
