@@ -21,20 +21,22 @@ public class King extends Piece {
     int rightRookX = 13;
     int leftRookX = 0;
     Square[][] squares = curBoard.getSquareMat();
-    HashMap<Square, Piece> boardMap = curBoard.getBoardMap();
     Square[] rook = new Square[2];
     rook[0] = squares[rightRookX][(int) destY / GRIDSIZE];
     rook[1] = squares[leftRookX][(int) destY / GRIDSIZE];
     for (int i = 0; i < 2; i++) {
       Square rookCur = rook[i];
-      if (boardMap.containsKey(rookCur) && !boardMap.get(rookCur).isMoved()) {
+      if (rookCur.getPiece() == null || !rookCur.getPiece().code.contains("r")) {
+        continue;
+      }
+      if (rookCur.getPiece() != null && !rookCur.getPiece().isMoved()) {
         boolean pieceBetween = false;
         int lowerBound = (i == 0) ? kingX + 1 : leftRookX + 1;
         int upperBound = (i == 0) ? rightRookX : kingX;
         int offset = (i == 0) ? 1 : -1;
         for (int j = lowerBound; j < upperBound; j++) {
           Square s = squares[j][(int) destY / GRIDSIZE];
-          Piece p = boardMap.get(s);
+          Piece p = s.getPiece();
           if (p != null || curBoard.squareUnderAttack(isWhite, s) != null) {
             pieceBetween = true;
             break;
@@ -42,8 +44,11 @@ public class King extends Piece {
         }
         if (!pieceBetween && curBoard.squareUnderAttack(isWhite, curSquare) == null) {
           Square square = squares[(int) destX / GRIDSIZE + 2 * offset][(int) destY / GRIDSIZE];
-          preLegalMoves.add(new Move(curSquare, square, Move.CASTLE, this, null));
-
+          Move castle = new Move(curSquare, square, Move.CASTLE, this, null);
+          castle.setSubMove(new Move(rookCur,
+              squares[(int) square.getX() / GRIDSIZE + (i == 0 ? -1 : 1)][(int) destY / GRIDSIZE],
+              Move.NORMAL, rookCur.getPiece(), null));
+          preLegalMoves.add(castle);
         }
       }
     }

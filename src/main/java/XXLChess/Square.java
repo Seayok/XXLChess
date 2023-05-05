@@ -18,6 +18,7 @@ public class Square extends GameObject {
   private boolean selected;
   private int numFlashes;
   private int curCoolDown;
+  private Piece curPiece;
   private boolean prevMove;
   private boolean onPieceWay;
   private boolean kingChecked;
@@ -30,6 +31,14 @@ public class Square extends GameObject {
   public Square(int x, int y, PApplet app) {
     super(x * SQUARESIZE, y * SQUARESIZE);
     color = new int[3];
+  }
+
+  public void setPiece(Piece piece) {
+    this.curPiece = piece;
+  }
+
+  public Piece getPiece() {
+    return curPiece;
   }
 
   public void setColor() {

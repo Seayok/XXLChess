@@ -7,10 +7,7 @@ public class Pawn extends Piece {
   }
 
   public void generateMove(Board curBoard) {
-    int dir = 1;
-    if (code.equals("wp")) {
-      dir = -1;
-    }
+    int dir = isWhite ? -1 : 1;
     dir *= pawnDirection;
     int range = 1;
     int rowDest = (int) destY / GRIDSIZE;
@@ -20,6 +17,19 @@ public class Pawn extends Piece {
     straightMove(curBoard, 0, dir, range);
     straightMove(curBoard, dir, dir, 1);
     straightMove(curBoard, -dir, dir, 1);
-
+    for (Move move : preLegalMoves) {
+      int colorOffset = isWhite ? 1 : 0;
+      int playerOffset = pawnDirection == 1 ? 1 : 0;
+      if (move.getEndSquare().getY() / GRIDSIZE == 6 + (colorOffset ^ playerOffset)) {
+        move.promotion();
+      }
+    }
   }
+
+  public void promoteToQueen() {
+    this.code = Character.toString(this.code.charAt(0)) + "q";
+    this.value = (isWhite ? 1 : -1) * 9.5;
+  }
+
+  public void unpromote() {}
 }

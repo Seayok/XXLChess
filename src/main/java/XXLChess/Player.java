@@ -52,18 +52,23 @@ public class Player {
   }
 
   public int makeRandomMove(Board curBoard, int prevVal) {
-    return 0;
-    // if (clock.getCountDown() != prevVal) {
-    // Random generator = new Random();
-    // List<Piece> pieceList = curBoard.getAllMoveablePiece(isWhite);
-    // Piece piece = pieceList.get(generator.nextInt(pieceList.size()));
-    // List<Square> desSquareList = piece.getValidMove();
-    // desSquareList.addAll(piece.getValidCapture());
-    // Square destSquare = desSquareList.get(generator.nextInt(desSquareList.size()));
-    // curBoard.makeMove(piece, destSquare);
-    // return 2;
-    // } else {
-    // return 0;
-    // }
+    if (clock.getCountDown() != prevVal) {
+      List<Move> moveList = curBoard.getAllMoves(isWhite);
+      Move resMove = null;
+      double miniMax = isWhite ? -Double.MAX_VALUE : Double.MAX_VALUE;
+      for (Move move : moveList) {
+        double moveScore = curBoard.evaluateMove(move, 3, -Double.MAX_VALUE, Double.MAX_VALUE);
+        if ((isWhite && moveScore > miniMax) || (!isWhite && moveScore < miniMax)) {
+          resMove = move;
+          miniMax = moveScore;
+        }
+
+      }
+      System.out.println(miniMax);
+      curBoard.makeMove(resMove, true, true);
+      return 2;
+    } else {
+      return 0;
+    }
   }
 }

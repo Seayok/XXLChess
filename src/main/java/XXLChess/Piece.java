@@ -1,10 +1,8 @@
 package XXLChess;
 
-import java.util.ArrayList;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.HashMap;
-import java.util.concurrent.ConcurrentHashMap;
 import processing.core.PApplet;
 import processing.core.PImage;
 
@@ -33,9 +31,8 @@ public abstract class Piece extends GameObject {
   protected String code;
   protected double value;
   protected PImage sprite;
-  protected PImage queenImage;
-  protected ArrayList<Move> validMoves = new ArrayList<Move>();
-  protected ArrayList<Move> preLegalMoves = new ArrayList<Move>();
+  protected CopyOnWriteArrayList<Move> validMoves = new CopyOnWriteArrayList<Move>();
+  protected CopyOnWriteArrayList<Move> preLegalMoves = new CopyOnWriteArrayList<Move>();
   protected boolean isWhite;
 
   public Piece(int x, int y, String code, Square curSquare) {
@@ -69,10 +66,6 @@ public abstract class Piece extends GameObject {
     String dir = "src/main/resources/XXLChess/" + code + ".png";
     this.sprite = app.loadImage(dir);
     this.sprite.resize(GRIDSIZE, GRIDSIZE);
-
-    String queencode = code.length() == 1 ? "Q" : "wq";
-    this.queenImage = app.loadImage("src/main/resources/XXLChess/" + queencode + ".png");
-    this.queenImage.resize(GRIDSIZE, GRIDSIZE);
   }
 
   public Square getSquare() {
@@ -114,31 +107,9 @@ public abstract class Piece extends GameObject {
     }
   }
 
-  public void tick() {
-    double movementSpeed = Piece.movementSpeed;
-    if (overrideSpeed > 0) {
-      movementSpeed = overrideSpeed;
-    }
-    float distX = this.x - destX;
-    float distY = this.y - destY;
-    double distance = Math.sqrt(Math.pow(distX, 2) + Math.pow(distY, 2));
-    if (distance > movementSpeed) {
-      this.x += Math.cos(direction) * movementSpeed;
-      this.y += Math.sin(direction) * movementSpeed;
-    } else {
-      this.x = this.destX;
-      this.y = this.destY;
-      overrideSpeed = 0;
-    }
-  }
-
-  public boolean isWhitePiece() {
-    return isWhite;
-  }
 
   protected void straightMove(Board curBoard, int dirX, int dirY, int range) {
     Square[][] squares = curBoard.getSquareMat();
-    HashMap<Square, Piece> boardMap = curBoard.getBoardMap();
     for (int i = 1; i <= range; i++) {
       int changeX = i * dirX;
       int changeY = i * dirY;
@@ -147,12 +118,12 @@ public abstract class Piece extends GameObject {
       if (resX >= 0 && resX < GRIDNUM && (changeX != 0 || changeY != 0) && resY >= 0
           && resY < GRIDNUM) {
         Square s = squares[resX][resY];
-        if (!boardMap.containsKey(s)) {
+        if (s.getPiece() == null) {
           if (!(this.code.toLowerCase().contains("p") && dirX != 0)) {
             preLegalMoves.add(new Move(curSquare, s, Move.NORMAL, this, null));
           }
         } else {
-          Piece destPiece = boardMap.get(s);
+          Piece destPiece = s.getPiece();
           if (destPiece.isWhitePiece() != this.isWhite) {
             if (!(this.code.toLowerCase().contains("p") && dirX == 0)) {
               preLegalMoves.add(new Move(curSquare, s, Move.CAPTURE, this, destPiece));
@@ -180,7 +151,8 @@ public abstract class Piece extends GameObject {
 
   public void removeIllegalMove(Board curBoard) {
     for (Move m : preLegalMoves) {
-      double moveScore = curBoard.evaluateMove(m, 1);
+      double moveScore =
+          curBoard.evaluateMove(m, 1, -Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY);
       // Magic numbers
       if (moveScore * (this.isWhite ? -1 : 1) > 900) {
         validMoves.remove(m);
@@ -190,7 +162,6 @@ public abstract class Piece extends GameObject {
 
   protected void setHorseMove(Board curBoard, int range) {
     Square[][] squares = curBoard.getSquareMat();
-    HashMap<Square, Piece> boardMap = curBoard.getBoardMap();
     List<Integer> changeX = Arrays.asList(1, range);
     List<Integer> changeY = Arrays.asList(range, 1);
     for (int i = 0; i < DIRECTION_NUMBER; i++) {
@@ -199,10 +170,10 @@ public abstract class Piece extends GameObject {
         int resY = (int) destY / GRIDSIZE + Y_DIAGONAL_DIRECTION[i] * changeY.get(j);
         if (resX >= 0 && resX < GRIDNUM && resY >= 0 && resY < GRIDNUM) {
           Square s = squares[resX][resY];
-          if (!boardMap.containsKey(s)) {
+          if (s.getPiece() == null) {
             preLegalMoves.add(new Move(curSquare, s, Move.NORMAL, this, null));
-          } else if (boardMap.get(s).isWhitePiece() != this.isWhite) {
-            preLegalMoves.add(new Move(curSquare, s, Move.CAPTURE, this, boardMap.get(s)));
+          } else if (s.getPiece().isWhitePiece() != this.isWhite) {
+            preLegalMoves.add(new Move(curSquare, s, Move.CAPTURE, this, s.getPiece()));
           }
         }
       }
@@ -236,6 +207,28 @@ public abstract class Piece extends GameObject {
     }
   }
 
+  public void tick() {
+    double movementSpeed = Piece.movementSpeed;
+    if (overrideSpeed > 0) {
+      movementSpeed = overrideSpeed;
+    }
+    float distX = this.x - destX;
+    float distY = this.y - destY;
+    double distance = Math.sqrt(Math.pow(distX, 2) + Math.pow(distY, 2));
+    if (distance > movementSpeed) {
+      this.x += Math.cos(direction) * movementSpeed;
+      this.y += Math.sin(direction) * movementSpeed;
+    } else {
+      this.x = this.destX;
+      this.y = this.destY;
+      overrideSpeed = 0;
+    }
+  }
+
+  public boolean isWhitePiece() {
+    return isWhite;
+  }
+
   public void setDestination(Square target) {
     this.curSquare = target;
     this.destX = target.getX();
@@ -257,7 +250,7 @@ public abstract class Piece extends GameObject {
   }
 
   public Move getMoveFromSquare(Square s, boolean legal) {
-    ArrayList<Move> searchList = legal ? validMoves : preLegalMoves;
+    CopyOnWriteArrayList<Move> searchList = legal ? validMoves : preLegalMoves;
     for (Move m : searchList) {
       if (m.getEndSquare() == s) {
         return m;
@@ -266,17 +259,6 @@ public abstract class Piece extends GameObject {
     return null;
   }
 
-  // fix this
-  public void promotion() {
-    if (this.code.equals("P") && (int) this.destY / GRIDSIZE == 6 + Math.max(pawnDirection, 0)) {
-      this.code = "Q";
-      this.sprite = this.queenImage;
-    }
-    if (this.code.equals("wp") && (int) this.destY / GRIDSIZE == 7 - Math.max(pawnDirection, 0)) {
-      this.code = "wq";
-      this.sprite = this.queenImage;
-    }
-  }
 
   /**
    * Draws the object to the screen.
