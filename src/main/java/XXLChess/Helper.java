@@ -48,9 +48,10 @@ public class Helper {
             arr[i][j] = " ";
           } else {
             char lineChar = line.charAt(j);
-
-            if (Character.isUpperCase(lineChar) || lineChar == ' ') {
-              arr[i][j] = Character.toString(line.charAt(j));
+            if (lineChar == ' ') {
+              arr[i][j] = " ";
+            } else if (Character.isUpperCase(lineChar)) {
+              arr[i][j] = "b" + Character.toString(line.charAt(j)).toLowerCase();
             } else {
               arr[i][j] = "w" + Character.toString(line.charAt(j));
             }

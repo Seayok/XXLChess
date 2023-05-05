@@ -3,41 +3,40 @@ package XXLChess;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.HashMap;
 import java.util.concurrent.ConcurrentHashMap;
 import processing.core.PApplet;
 import processing.core.PImage;
 
 
-public class Piece extends GameObject {
+public abstract class Piece extends GameObject {
   public static final int GRIDNUM = Board.GRIDNUM;
   public static final int GRIDSIZE = Board.GRIDSIZE;
-  // public static final double BUFFER_SPEED = 0.5;
   public static final int FPS = 60;
   public static final int DIRECTION_NUMBER = 4;
-  public static final int HORSE_RANGE = 2;
-  public static final int CAMEL_RANGE = 3;
+  protected static final int HORSE_RANGE = 2;
+  protected static final int CAMEL_RANGE = 3;
   public static final int[] Y_STRAIGHT_DIRECTION = {-1, 0, 1, 0};
   public static final int[] X_STRAIGHT_DIRECTION = {0, 1, 0, -1};
   public static final int[] Y_DIAGONAL_DIRECTION = {-1, -1, 1, 1};
   public static final int[] X_DIAGONAL_DIRECTION = {1, -1, -1, 1};
   private static double movementSpeed;
-  private static int pawnDirection;
-  private static int movementTime;
+  protected static int pawnDirection;
+  protected static int movementTime;
 
   private double overrideSpeed;
-  private float destX;
-  private float destY;
-  private boolean updatedMoveSet;
-  private Square curSquare;
-  private boolean isMoved;
-  private double direction;
-  private String code;
-  private PImage sprite;
-  private PImage queenImage;
-  private ArrayList<Square> validMove = new ArrayList<Square>();
-  private ArrayList<Square> validCapture = new ArrayList<Square>();
-  private ArrayList<Square> preLegalMove = new ArrayList<Square>();
-  private boolean isWhite;
+  protected float destX;
+  protected float destY;
+  protected Square curSquare;
+  protected boolean isMoved;
+  protected double direction;
+  protected String code;
+  protected double value;
+  protected PImage sprite;
+  protected PImage queenImage;
+  protected ArrayList<Move> validMoves = new ArrayList<Move>();
+  protected ArrayList<Move> preLegalMoves = new ArrayList<Move>();
+  protected boolean isWhite;
 
   public Piece(int x, int y, String code, Square curSquare) {
     super(x, y);
@@ -80,20 +79,24 @@ public class Piece extends GameObject {
     return curSquare;
   }
 
-  public List<Square> getValidMove() {
-    return validMove;
+  public void setCurSquare(Square curSquare) {
+    this.curSquare = curSquare;
   }
 
-  public List<Square> getValidCapture() {
-    return validCapture;
+  public List<Move> getValidMoves() {
+    return validMoves;
+  }
+
+  public List<Move> getPreLegalMoves() {
+    return preLegalMoves;
   }
 
   public String getCode() {
     return code;
   }
 
-  public void moved() {
-    this.isMoved = true;
+  public void setMoved(boolean moved) {
+    this.isMoved = moved;
   }
 
   public boolean isMoved() {
@@ -101,11 +104,13 @@ public class Piece extends GameObject {
   }
 
   public void displayMoveSet() {
-    for (Square s : validMove) {
-      s.setOnPieceWay(true);
-    }
-    for (Square s : validCapture) {
-      s.setOnCapture(true);
+    for (Move m : validMoves) {
+      Square s = m.getEndSquare();
+      if (m.getFlag() == Move.CAPTURE) {
+        s.setOnCapture(true);
+      } else {
+        s.setOnPieceWay(true);
+      }
     }
   }
 
@@ -131,9 +136,9 @@ public class Piece extends GameObject {
     return isWhite;
   }
 
-  public void straightMove(Board curBoard, int dirX, int dirY, int range) {
+  protected void straightMove(Board curBoard, int dirX, int dirY, int range) {
     Square[][] squares = curBoard.getSquareMat();
-    ConcurrentHashMap<Square, Piece> boardMap = curBoard.getBoardMap();
+    HashMap<Square, Piece> boardMap = curBoard.getBoardMap();
     for (int i = 1; i <= range; i++) {
       int changeX = i * dirX;
       int changeY = i * dirY;
@@ -144,12 +149,13 @@ public class Piece extends GameObject {
         Square s = squares[resX][resY];
         if (!boardMap.containsKey(s)) {
           if (!(this.code.toLowerCase().contains("p") && dirX != 0)) {
-            validMove.add(s);
+            preLegalMoves.add(new Move(curSquare, s, Move.NORMAL, this, null));
           }
         } else {
-          if (boardMap.get(s).isWhitePiece() != this.isWhite) {
+          Piece destPiece = boardMap.get(s);
+          if (destPiece.isWhitePiece() != this.isWhite) {
             if (!(this.code.toLowerCase().contains("p") && dirX == 0)) {
-              validCapture.add(s);
+              preLegalMoves.add(new Move(curSquare, s, Move.CAPTURE, this, destPiece));
             }
           }
           break;
@@ -158,141 +164,33 @@ public class Piece extends GameObject {
     }
   }
 
-  public void updateValidMove(Board curBoard) {
-    if (updatedMoveSet) {
-      return;
-    }
-    preLegalMove.removeAll(preLegalMove);
-    validCapture.removeAll(validCapture);
-    validMove.removeAll(validMove);
+  public abstract void generateMove(Board curBoard);
 
-    char codePiece = code.toLowerCase().charAt(code.length() - 1);
-
-    switch (codePiece) {
-      case 'p':
-        int dir = 1;
-        if (code.equals("wp")) {
-          dir = -1;
-        }
-        dir *= pawnDirection;
-        int range = 1;
-        int rowDest = (int) destY / GRIDSIZE;
-        if ((rowDest == 1 || rowDest == GRIDNUM - 2) && !this.isMoved()) {
-          range = 2;
-        }
-        straightMove(curBoard, 0, dir, range);
-        straightMove(curBoard, dir, dir, 1);
-        straightMove(curBoard, -dir, dir, 1);
-        break;
-      case 'r':
-        setRookMove(curBoard);
-        break;
-      case 'b':
-        setBishopMove(curBoard);
-        break;
-      case 'n':
-        setHorseMove(curBoard, HORSE_RANGE);
-        break;
-      case 'k':
-        setKingMove(curBoard);
-        if (!this.isMoved && curBoard.isWhiteTurn() == isWhite) {
-          setCastleMove(curBoard);
-        }
-        break;
-      case 'g':
-        setKingMove(curBoard);
-        setHorseMove(curBoard, HORSE_RANGE);
-        break;
-      case 'e':
-        setHorseMove(curBoard, HORSE_RANGE);
-        setRookMove(curBoard);
-        break;
-      case 'h':
-        setHorseMove(curBoard, HORSE_RANGE);
-        setBishopMove(curBoard);
-        break;
-      case 'c':
-        setHorseMove(curBoard, CAMEL_RANGE);
-        break;
-      case 'q':
-        setBishopMove(curBoard);
-        setRookMove(curBoard);
-        break;
-      case 'a':
-        setBishopMove(curBoard);
-        setRookMove(curBoard);
-        setHorseMove(curBoard, HORSE_RANGE);
-        break;
-      default:
-    }
-    preLegalMove.addAll(validMove);
-    preLegalMove.addAll(validCapture);
+  public void updatePreLegalMoves(Board curBoard) {
+    preLegalMoves.removeAll(preLegalMoves);
+    validMoves.removeAll(validMoves);
+    generateMove(curBoard);
+    validMoves.addAll(preLegalMoves);
   }
 
-  public void setCastleMove(Board curBoard) {
-    int kingX = 7;
-    int rightRookX = 13;
-    int leftRookX = 0;
-    Square[][] squares = curBoard.getSquareMat();
-    ConcurrentHashMap<Square, Piece> boardMap = curBoard.getBoardMap();
-    Square[] rook = new Square[2];
-    rook[0] = squares[rightRookX][(int) destY / GRIDSIZE];
-    rook[1] = squares[leftRookX][(int) destY / GRIDSIZE];
-    for (int i = 0; i < 2; i++) {
-      Square rookCur = rook[i];
-      if (boardMap.containsKey(rookCur) && !boardMap.get(rookCur).isMoved()) {
-        boolean pieceBetween = false;
-        int lowerBound = (i == 0) ? kingX + 1 : leftRookX + 1;
-        int upperBound = (i == 0) ? rightRookX : kingX;
-        int offset = (i == 0) ? 1 : -1;
-        for (int j = lowerBound; j < upperBound; j++) {
-          Square s = squares[j][(int) destY / GRIDSIZE];
-          Piece p = boardMap.get(s);
-          if (p != null || curBoard.squareUnderAttack(isWhite, s) != null) {
-            pieceBetween = true;
-            break;
-          }
-        }
-        if (!pieceBetween && curBoard.squareUnderAttack(isWhite, curSquare) == null) {
-          Square square = squares[(int) destX / GRIDSIZE + 2 * offset][(int) destY / GRIDSIZE];
-          validMove.add(square);
-        }
-      }
-    }
+  public double getValue() {
+    return value;
   }
+
 
   public void removeIllegalMove(Board curBoard) {
-    if (updatedMoveSet) {
-      return;
-    }
-    List<Square> illegalMoves = new ArrayList<Square>();
-    ConcurrentHashMap<Square, Piece> boardMap = curBoard.getBoardMap();
-    Square[][] squareMat = curBoard.getSquareMat();
-    for (Square s : preLegalMove) {
-      final Piece p = boardMap.get(s);
-      Square oldSquare = squareMat[(int) destX / GRIDSIZE][(int) destY / GRIDSIZE];
-      boardMap.compute(s, (k, v) -> this);
-      this.curSquare = s;
-      boardMap.remove(oldSquare);
-      if (curBoard.squareUnderAttack(this.isWhite, curBoard.getKing().getSquare()) != null) {
-        illegalMoves.add(s);
+    for (Move m : preLegalMoves) {
+      double moveScore = curBoard.evaluateMove(m, 1);
+      // Magic numbers
+      if (moveScore * (this.isWhite ? -1 : 1) > 900) {
+        validMoves.remove(m);
       }
-      this.curSquare = oldSquare;
-      boardMap.put(oldSquare, this);
-      boardMap.compute(s, (k, v) -> p);
     }
-    validMove.removeAll(illegalMoves);
-    validCapture.removeAll(illegalMoves);
-    updatedMoveSet = true;
   }
 
-  public List<Square> getPreLegalMove() {
-    return preLegalMove;
-  }
-
-  public void setHorseMove(Board curBoard, int range) {
+  protected void setHorseMove(Board curBoard, int range) {
     Square[][] squares = curBoard.getSquareMat();
-    ConcurrentHashMap<Square, Piece> boardMap = curBoard.getBoardMap();
+    HashMap<Square, Piece> boardMap = curBoard.getBoardMap();
     List<Integer> changeX = Arrays.asList(1, range);
     List<Integer> changeY = Arrays.asList(range, 1);
     for (int i = 0; i < DIRECTION_NUMBER; i++) {
@@ -302,16 +200,16 @@ public class Piece extends GameObject {
         if (resX >= 0 && resX < GRIDNUM && resY >= 0 && resY < GRIDNUM) {
           Square s = squares[resX][resY];
           if (!boardMap.containsKey(s)) {
-            validMove.add(s);
+            preLegalMoves.add(new Move(curSquare, s, Move.NORMAL, this, null));
           } else if (boardMap.get(s).isWhitePiece() != this.isWhite) {
-            validCapture.add(s);
+            preLegalMoves.add(new Move(curSquare, s, Move.CAPTURE, this, boardMap.get(s)));
           }
         }
       }
     }
   }
 
-  public void setRookMove(Board curBoard) {
+  protected void setRookMove(Board curBoard) {
     for (int i = 0; i < DIRECTION_NUMBER; i++) {
       int dirX = X_STRAIGHT_DIRECTION[i];
       int dirY = Y_STRAIGHT_DIRECTION[i];
@@ -319,7 +217,7 @@ public class Piece extends GameObject {
     }
   }
 
-  public void setBishopMove(Board curBoard) {
+  protected void setBishopMove(Board curBoard) {
     for (int i = 0; i < DIRECTION_NUMBER; i++) {
       int dirX = X_DIAGONAL_DIRECTION[i];
       int dirY = Y_DIAGONAL_DIRECTION[i];
@@ -327,7 +225,7 @@ public class Piece extends GameObject {
     }
   }
 
-  public void setKingMove(Board curBoard) {
+  protected void setKingMove(Board curBoard) {
     for (int i = 0; i < DIRECTION_NUMBER; i++) {
       int dirX = X_DIAGONAL_DIRECTION[i];
       int dirY = Y_DIAGONAL_DIRECTION[i];
@@ -358,14 +256,17 @@ public class Piece extends GameObject {
     return destY;
   }
 
-  public boolean checkPreLegalMove(Square s) {
-    return preLegalMove.contains(s);
+  public Move getMoveFromSquare(Square s, boolean legal) {
+    ArrayList<Move> searchList = legal ? validMoves : preLegalMoves;
+    for (Move m : searchList) {
+      if (m.getEndSquare() == s) {
+        return m;
+      }
+    }
+    return null;
   }
 
-  public void newMoveSet() {
-    this.updatedMoveSet = false;
-  }
-
+  // fix this
   public void promotion() {
     if (this.code.equals("P") && (int) this.destY / GRIDSIZE == 6 + Math.max(pawnDirection, 0)) {
       this.code = "Q";

@@ -1,4 +1,5 @@
-interface
+concurrenthashmap -> hashmap
+fix promotion
 testcase
 Report + UML +Comments + Style
 Extension
