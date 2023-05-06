@@ -1,5 +1,7 @@
 fix promotion
 add evaluation function
 testcase
+purple highlight
+fix castle
 Report + UML +Comments + Style
 Extension

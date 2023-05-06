@@ -69,6 +69,7 @@ public class Board extends GameObject {
       }
     }
     newMoveSet();
+    draw(app);
   }
 
   public int startClick(int x, int y) {
@@ -245,7 +246,6 @@ public class Board extends GameObject {
   public Piece squareUnderAttack(boolean isWhite, Square target) {
     for (Piece p : pieceList) {
       if (p.isWhitePiece() != isWhite) {
-        p.updatePreLegalMoves(this);
         if (p.getMoveFromSquare(target, false) != null) {
           return p;
         }
@@ -256,14 +256,16 @@ public class Board extends GameObject {
 
   public double forceKingToEdge() {
     double eval = 0;
-    Piece ourKing = king[whiteTurn ? 1 : 0];
-    Piece theirKing = king[whiteTurn ? 0 : 1];
+    Piece theirKing = king[whiteTurn ? 1 : 0];
+    Piece ourKing = king[whiteTurn ? 0 : 1];
     double dstxToCenter =
-        Math.max(theirKing.getDesX() / GRIDSIZE - 6, 7 - theirKing.getDesX() / GRIDSIZE);
+        Math.max((theirKing.getDesX() / GRIDSIZE) - 6, 7 - (theirKing.getDesX() / GRIDSIZE));
     double dstyToCenter =
-        Math.max(theirKing.getDesY() / GRIDSIZE - 6, 7 - theirKing.getDesX() / GRIDSIZE);
-    eval += dstxToCenter + dstyToCenter + (26 - (Math.abs(ourKing.getDesX() - theirKing.getDesX())
-        + Math.abs(ourKing.getDesY() - theirKing.getDesY())) / GRIDSIZE) / 5;
+        Math.max((theirKing.getDesY() / GRIDSIZE) - 6, 7 - (theirKing.getDesX() / GRIDSIZE));
+    double dstxToOpponent = Math.abs(ourKing.getDesX() - theirKing.getDesX()) / GRIDSIZE;
+    double dstyToOpponent = Math.abs(ourKing.getDesY() - theirKing.getDesY()) / GRIDSIZE;
+    eval += dstxToCenter + dstyToCenter;
+    eval += (26 - dstxToOpponent - dstyToOpponent) / 26;
     return eval * (28 - pieceList.size()) / 300;
   }
 
@@ -279,7 +281,7 @@ public class Board extends GameObject {
         return Double.MAX_VALUE * (whiteTurn ? -1 : 1);
       }
     }
-    res += forceKingToEdge() * (whiteTurn ? 1 : -1);
+    res += forceKingToEdge() * (whiteTurn ? -1 : 1);
     return res;
   }
 
@@ -394,9 +396,9 @@ public class Board extends GameObject {
   }
 
   public void unmove(Move move, boolean isMoved) {
-    Piece movePiece = move.getSourcePiece();
-    Square startSquare = move.getStartSquare();
-    Square endSquare = move.getEndSquare();
+    final Piece movePiece = move.getSourcePiece();
+    final Square startSquare = move.getStartSquare();
+    final Square endSquare = move.getEndSquare();
     if (move.getFlag() == Move.CASTLE) {
       unmove(move.getSubMove(), false);
     }
@@ -424,6 +426,7 @@ public class Board extends GameObject {
     for (Piece p : pieceList) {
       p.updatePreLegalMoves(this);
     }
+
     for (Piece p : pieceList) {
       p.updateLegalMove(this);
     }

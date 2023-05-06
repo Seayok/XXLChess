@@ -1,5 +1,5 @@
 {
-  "layout": "level3.txt",
+  "layout": "level2.txt",
   "time_controls": {
     "player": {
       "seconds": 30,
@@ -10,7 +10,7 @@
       "increment": 2
     }
   },
-  "player_colour": "white",
+  "player_colour": "black",
   "piece_movement_speed": 6.0,
   "max_movement_time": 1
 }

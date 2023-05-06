@@ -73,6 +73,8 @@ public class App extends PApplet {
   public void keyPressed() {
     if (key == 'r') {
       textBox.hide();
+      this.player1 = new Player();
+      this.player2 = new Player();
       setup();
     }
     if (key == 'e') {
