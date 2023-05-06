@@ -283,6 +283,7 @@ public abstract class Piece extends GameObject {
       if (overrideSpeed > 0) {
         movementSpeed = overrideSpeed;
       }
+      System.out.println(movementSpeed);
       float distX = this.x - destX;
       float distY = this.y - destY;
       double distance = Math.sqrt(Math.pow(distX, 2) + Math.pow(distY, 2));

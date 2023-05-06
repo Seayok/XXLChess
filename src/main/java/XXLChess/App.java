@@ -97,12 +97,11 @@ public class App extends PApplet {
    * Draw all elements in the game by current frame.
    */
   public void draw() {
-    background(155);
+    // background(155);
+    fill(155);
+    stroke(155);
+    rect(672, 0, 150, 800);
     game.draw(this);
-    textBox.draw(this);
-    board.draw(this);
-    clockBlack.draw(this);
-    clockWhite.draw(this);
   }
 
   // Add any additional methods or attributes you want. Please put classes in

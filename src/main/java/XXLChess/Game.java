@@ -117,5 +117,11 @@ public class Game {
     if (curPlayer.isBot() && !gameOver) {
       processMoveState(curPlayer.guessMove(board, prevVal));
     }
+    textBox.draw(app);
+    if (!curPlayer.isCalculating()) {
+      board.draw(app);
+    }
+    clockBlack.draw(app);
+    clockWhite.draw(app);
   }
 }

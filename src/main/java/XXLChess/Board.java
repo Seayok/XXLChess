@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
-import java.util.TreeMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import processing.core.PApplet;
 
@@ -108,9 +107,9 @@ public class Board extends GameObject {
   }
 
   public void makeMove(Move move, boolean display, boolean switchturn) {
-    Piece movePiece = move.getSourcePiece();
-    Square target = move.getEndSquare();
-    Square start = move.getStartSquare();
+    final Piece movePiece = move.getSourcePiece();
+    final Square target = move.getEndSquare();
+    final Square start = move.getStartSquare();
 
     if (move.getFlag() == Move.CASTLE) {
       makeMove(move.getSubMove(), display, false);
@@ -149,17 +148,19 @@ public class Board extends GameObject {
         Piece sourcePiece = move.getSourcePiece();
         double moveScore = 0;
         if (move.getFlag() == Move.CAPTURE) {
-          moveScore = 8 * move.getDestinationPiece().getValue() - sourcePiece.getValue();
+          moveScore = 8 * Math.abs(move.getDestinationPiece().getValue())
+              - Math.abs(sourcePiece.getValue());
         }
         if (move.getFlag() == Move.PROMOTION) {
           moveScore += 9;
         }
         if (move.getEndSquare().isControl(!whiteTurn) && move.getFlag() != Move.CAPTURE) {
-          moveScore -= sourcePiece.getValue();
+          moveScore -= Math.abs(sourcePiece.getValue());
         }
         move.setScore(moveScore);
       }
-      Collections.sort(result, (a, b) -> (int) (a.getScore() - b.getScore()));
+      Collections.sort(result,
+          (a, b) -> (int) new Double(b.getScore()).compareTo(new Double(a.getScore())));
     }
     return result;
   }
@@ -189,7 +190,6 @@ public class Board extends GameObject {
     kingSquares.add(new Move(kingPiece.getSquare(), kingSquare, Move.NORMAL, kingPiece, null));
     kingSquare.setPiece(null);
     for (Move m : kingSquares) {
-      // s.setOnCapture(true);
       Square s = m.getEndSquare();
       Piece p = squareUnderAttack(whiteTurn, s);
       if (p == null) {
@@ -254,6 +254,19 @@ public class Board extends GameObject {
     return null;
   }
 
+  public double forceKingToEdge() {
+    double eval = 0;
+    Piece ourKing = king[whiteTurn ? 1 : 0];
+    Piece theirKing = king[whiteTurn ? 0 : 1];
+    double dstxToCenter =
+        Math.max(theirKing.getDesX() / GRIDSIZE - 6, 7 - theirKing.getDesX() / GRIDSIZE);
+    double dstyToCenter =
+        Math.max(theirKing.getDesY() / GRIDSIZE - 6, 7 - theirKing.getDesX() / GRIDSIZE);
+    eval += dstxToCenter + dstyToCenter + (26 - (Math.abs(ourKing.getDesX() - theirKing.getDesX())
+        + Math.abs(ourKing.getDesY() - theirKing.getDesY())) / GRIDSIZE) / 5;
+    return eval * (28 - pieceList.size()) / 300;
+  }
+
   public double evaluateBoard() {
     double res = 0;
     for (Piece p : pieceList) {
@@ -263,42 +276,63 @@ public class Board extends GameObject {
       if (!checkCheck()) {
         return 0;
       } else {
-        return Double.POSITIVE_INFINITY * (whiteTurn ? -1 : 1);
+        return Double.MAX_VALUE * (whiteTurn ? -1 : 1);
       }
     }
+    res += forceKingToEdge() * (whiteTurn ? 1 : -1);
     return res;
   }
 
-  // public double evaluate(int depth, double alpha, double beta) {
-  // if (depth == 0) {
-  // return evaluateBoard();
-  // }
-  // List<Move> moveList = getAllMoves(whiteTurn);
-  // if (moveList.size() == 0) {
-  // if (checkCheck()) {
-  // return -Double.POSITIVE_INFINITY;
-  // }
-  // return 0;
-  // }
-  // for (Move move : moveList) {
-  // final boolean prevIsMoved = move.getSourcePiece().isMoved();
-  // final Piece destPiece = move.getDestinationPiece();
-  // int position = pieceList.indexOf(destPiece);
-  // makeMove(move, false, false);
-  // final double eval = -evaluate(depth - 1, -beta, -alpha);
-  // unmove(move, prevIsMoved);
-  // if (move.getFlag() == Move.CAPTURE) {
-  // pieceList.add(position, destPiece);
-  // }
-  // newMoveSet();
-  // if (eval >= beta) {
-  // return beta;
-  // }
-  // alpha = Math.max(alpha, eval);
-  // }
+  public double evaluateCapture(Move move, double alpha, double beta, boolean maximize) {
+    Piece movePiece = move.getSourcePiece();
+    double res = maximize ? -Double.POSITIVE_INFINITY : Double.POSITIVE_INFINITY;
+    final boolean prevIsMoved = movePiece.isMoved();
+    final Piece destPiece = move.getDestinationPiece();
+    int position = pieceList.indexOf(destPiece);
 
-  // return alpha;
-  // }
+    makeMove(move, false, false);
+    double evalCur = evaluateBoard();
+    if (maximize) {
+      res = Math.max(res, evalCur);
+      alpha = Math.max(alpha, evalCur);
+    } else {
+      res = Math.min(res, evalCur);
+      beta = Math.min(beta, evalCur);
+    }
+
+
+    if (checkCheckMate()) {
+      if (!checkCheck()) {
+        res = 0;
+      } else {
+        res = whiteTurn ? -Double.POSITIVE_INFINITY : Double.POSITIVE_INFINITY;
+      }
+    } else if (beta > alpha) {
+      List<Move> moveList = getAllMoves(maximize, true);
+      for (Move m : moveList) {
+        if (m.getFlag() != Move.CAPTURE) {
+          continue;
+        }
+        double eval = evaluateCapture(m, alpha, beta, !maximize);
+        if (maximize) {
+          res = Math.max(res, eval);
+          alpha = Math.max(alpha, eval);
+        } else {
+          res = Math.min(res, eval);
+          beta = Math.min(beta, eval);
+        }
+        if (beta <= alpha) {
+          break;
+        }
+      }
+    }
+
+    unmove(move, prevIsMoved);
+
+    pieceList.add(position, destPiece);
+    newMoveSet();
+    return res;
+  }
 
   public double evaluateMove(Move move, int depth, double alpha, double beta, boolean maximize) {
     Piece movePiece = move.getSourcePiece();
@@ -312,27 +346,40 @@ public class Board extends GameObject {
     if (checkCheckMate()) {
       if (!checkCheck()) {
         res = 0;
+      } else {
+        res = whiteTurn ? -Double.POSITIVE_INFINITY : Double.POSITIVE_INFINITY;
       }
-      res = whiteTurn ? -Double.POSITIVE_INFINITY : Double.POSITIVE_INFINITY;
     } else if (depth == 0) {
       res = evaluateBoard();
+      List<Move> moveList = getAllMoves(maximize, true);
+      for (Move m : moveList) {
+        if (m.getFlag() == Move.CAPTURE) {
+          double eval = evaluateCapture(m, alpha, beta, !maximize);
+          if (maximize) {
+            res = Math.max(res, eval);
+            alpha = Math.max(alpha, eval);
+          } else {
+            res = Math.min(res, eval);
+            beta = Math.min(beta, eval);
+          }
+          if (beta <= alpha) {
+            break;
+          }
+        }
+      }
     } else {
       List<Move> moveList = getAllMoves(maximize, true);
       for (Move m : moveList) {
+        double eval = evaluateMove(m, depth - 1, alpha, beta, !maximize);
         if (maximize) {
-          double eval = evaluateMove(m, depth - 1, alpha, beta, false);
           res = Math.max(res, eval);
-          beta = Math.min(beta, eval);
-          if (beta <= alpha) {
-            break;
-          }
-        } else {
-          double eval = evaluateMove(m, depth - 1, alpha, beta, true);
-          res = Math.min(res, eval);
           alpha = Math.max(alpha, eval);
-          if (beta <= alpha) {
-            break;
-          }
+        } else {
+          res = Math.min(res, eval);
+          beta = Math.min(beta, eval);
+        }
+        if (beta <= alpha) {
+          break;
         }
       }
     }
@@ -343,7 +390,6 @@ public class Board extends GameObject {
       pieceList.add(position, destPiece);
     }
     newMoveSet();
-    System.out.println(movePiece.code + " " + depth + " " + res);
     return res;
   }
 
@@ -381,9 +427,6 @@ public class Board extends GameObject {
     for (Piece p : pieceList) {
       p.updateLegalMove(this);
     }
-    // for (int i = 0; i < pieceList.size(); i++) {
-    // System.out.print(pieceList.get(i).getCode() + " ");
-    // }
   }
 
   public boolean isWhiteTurn() {

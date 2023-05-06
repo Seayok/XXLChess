@@ -1,5 +1,5 @@
 {
-  "layout": "stalemate.txt",
+  "layout": "level3.txt",
   "time_controls": {
     "player": {
       "seconds": 30,
