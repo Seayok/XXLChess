@@ -102,8 +102,8 @@ public class Game {
       } else {
         moveState = board.selectClick(x, y);
       }
+      processMoveState(moveState);
     }
-    processMoveState(moveState);
   }
 
   public void switchTurn() {
@@ -111,12 +111,11 @@ public class Game {
     curPlayer = (curPlayer == player1) ? player2 : player1;
     curPlayer.getClock().start(app);
     prevVal = curPlayer.getClock().getCountDown();
-    board.newMoveSet();
   }
 
   public void draw(PApplet app) {
     if (curPlayer.isBot() && !gameOver) {
-      processMoveState(curPlayer.makeRandomMove(board, prevVal));
+      processMoveState(curPlayer.guessMove(board, prevVal));
     }
   }
 }

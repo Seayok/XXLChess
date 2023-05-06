@@ -1,7 +1,5 @@
 package XXLChess;
 
-import java.util.HashMap;
-
 public class King extends Piece {
   public King(int x, int y, String code, Square curSquare) {
     super(x, y, code, curSquare);

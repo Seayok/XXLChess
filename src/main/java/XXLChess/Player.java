@@ -1,9 +1,11 @@
 package XXLChess;
 
-import java.util.Random;
+import java.util.Collections;
 import java.util.List;
+import java.util.TreeMap;
 import processing.core.PApplet;
 import processing.data.JSONObject;
+
 
 public class Player {
   private boolean isWhite;
@@ -51,13 +53,14 @@ public class Player {
     this.clock.start(app);
   }
 
-  public int makeRandomMove(Board curBoard, int prevVal) {
+  public int guessMove(Board curBoard, int prevVal) {
     if (clock.getCountDown() != prevVal) {
-      List<Move> moveList = curBoard.getAllMoves(isWhite);
+      List<Move> moveList = curBoard.getAllMoves(isWhite, true);
       Move resMove = null;
-      double miniMax = isWhite ? -Double.MAX_VALUE : Double.MAX_VALUE;
+      double miniMax = isWhite ? -Double.POSITIVE_INFINITY : Double.POSITIVE_INFINITY;
       for (Move move : moveList) {
-        double moveScore = curBoard.evaluateMove(move, 3, -Double.MAX_VALUE, Double.MAX_VALUE);
+        double moveScore = curBoard.evaluateMove(move, 3, -Double.POSITIVE_INFINITY,
+            Double.POSITIVE_INFINITY, !isWhite);
         if ((isWhite && moveScore > miniMax) || (!isWhite && moveScore < miniMax)) {
           resMove = move;
           miniMax = moveScore;
@@ -71,4 +74,6 @@ public class Player {
       return 0;
     }
   }
+
+
 }

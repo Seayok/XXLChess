@@ -4,12 +4,15 @@ public class Move {
   public static final int NORMAL = 0;
   public static final int CAPTURE = 1;
   public static final int CASTLE = 2;
+  public static final int THREAT = 3;
+  public static final int PROMOTION = 4;
 
 
   private Square startSquare;
   private Square endSquare;
   private boolean promotion;
   private int flag;
+  private double score;
   private Piece sourcePiece;
   private Piece destPiece;
   private Move subMove;
@@ -21,6 +24,14 @@ public class Move {
     this.sourcePiece = sourcePiece;
     this.destPiece = destPiece;
     promotion = false;
+  }
+
+  public void setScore(double score) {
+    this.score = score;
+  }
+
+  public double getScore() {
+    return score;
   }
 
   public Move getSubMove() {

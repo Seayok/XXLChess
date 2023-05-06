@@ -29,6 +29,8 @@ public abstract class Piece extends GameObject {
   protected boolean isMoved;
   protected double direction;
   protected String code;
+  protected Piece pinPiece;
+  protected boolean moving;
   protected double value;
   protected PImage sprite;
   protected CopyOnWriteArrayList<Move> validMoves = new CopyOnWriteArrayList<Move>();
@@ -72,8 +74,12 @@ public abstract class Piece extends GameObject {
     return curSquare;
   }
 
-  public void setCurSquare(Square curSquare) {
-    this.curSquare = curSquare;
+  public void startMoving() {
+    this.moving = true;
+  }
+
+  public void setPinPiece(Piece pin) {
+    pinPiece = pin;
   }
 
   public List<Move> getValidMoves() {
@@ -109,6 +115,10 @@ public abstract class Piece extends GameObject {
 
 
   protected void straightMove(Board curBoard, int dirX, int dirY, int range) {
+    int kingOccur = 0;
+    int occur = 0;
+    Piece prevPiece = this;
+    CopyOnWriteArrayList<Piece>[] attackers = curBoard.getAttackers();
     Square[][] squares = curBoard.getSquareMat();
     for (int i = 1; i <= range; i++) {
       int changeX = i * dirX;
@@ -118,18 +128,40 @@ public abstract class Piece extends GameObject {
       if (resX >= 0 && resX < GRIDNUM && (changeX != 0 || changeY != 0) && resY >= 0
           && resY < GRIDNUM) {
         Square s = squares[resX][resY];
-        if (s.getPiece() == null) {
-          if (!(this.code.toLowerCase().contains("p") && dirX != 0)) {
+        Piece destPiece = s.getPiece();
+        if (destPiece == null) {
+          if (!(this.code.toLowerCase().contains("p") && dirX != 0) && occur - kingOccur == 0) {
             preLegalMoves.add(new Move(curSquare, s, Move.NORMAL, this, null));
+            s.underControl(isWhite);
           }
         } else {
-          Piece destPiece = s.getPiece();
-          if (destPiece.isWhitePiece() != this.isWhite) {
-            if (!(this.code.toLowerCase().contains("p") && dirX == 0)) {
-              preLegalMoves.add(new Move(curSquare, s, Move.CAPTURE, this, destPiece));
-            }
+          if (kingOccur > 0) {
+            break;
           }
-          break;
+          if (destPiece.isWhitePiece() != this.isWhite) {
+            if (!(this.code.contains("p") && dirX == 0)) {
+              if (destPiece.getCode().contains("k")) {
+                if (occur == 0) {
+                  attackers[this.isWhite ? 0 : 1].add(this);
+                } else {
+                  prevPiece.setPinPiece(this);
+                }
+                kingOccur++;
+              }
+              prevPiece = destPiece;
+              occur++;
+              if (occur <= 1) {
+                preLegalMoves.add(new Move(curSquare, s, Move.CAPTURE, this, destPiece));
+                s.underControl(isWhite);
+              }
+            }
+          } else {
+            s.underControl(isWhite);
+            break;
+          }
+          if (occur > 1) {
+            break;
+          }
         }
       }
     }
@@ -141,26 +173,59 @@ public abstract class Piece extends GameObject {
     preLegalMoves.removeAll(preLegalMoves);
     validMoves.removeAll(validMoves);
     generateMove(curBoard);
-    validMoves.addAll(preLegalMoves);
   }
 
   public double getValue() {
     return value;
   }
 
-
-  public void removeIllegalMove(Board curBoard) {
-    for (Move m : preLegalMoves) {
-      double moveScore =
-          curBoard.evaluateMove(m, 1, -Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY);
-      // Magic numbers
-      if (moveScore * (this.isWhite ? -1 : 1) > 900) {
-        validMoves.remove(m);
+  public void updateLegalMove(Board curBoard) {
+    CopyOnWriteArrayList<Piece> attackers = curBoard.getAttackers()[isWhite ? 1 : 0];
+    Square kingSquare = curBoard.getKing(isWhite).getSquare();
+    // Move king out of danger
+    if (this.code.contains("k")) {
+      for (Move move : preLegalMoves) {
+        if (!move.getEndSquare().isControl(!isWhite)) {
+          validMoves.add(move);
+        }
       }
+      return;
     }
+    if (attackers.size() > 1) {
+      return;
+    } else if (attackers.size() == 1) {
+      Piece attacker = attackers.get(0);
+      Square attackerSquare = attacker.getSquare();
+      // Capture the attacking piece
+      if (attackerSquare.isControl(isWhite)) {
+        Move move = getMoveFromSquare(attackerSquare, false);
+        if (move != null) {
+          validMoves.add(move);
+        }
+      }
+
+      // Block the attack
+      if (!attacker.code.contains("p|n|c|g|k")) {
+        for (Move move : preLegalMoves) {
+          if (Board.checkOnWay(kingSquare, attackerSquare, move.getEndSquare())) {
+            validMoves.add(move);
+          }
+        }
+      }
+    } else {
+      validMoves.addAll(preLegalMoves);
+    }
+
+    if (pinPiece != null) {
+      validMoves.removeIf(
+          move -> !Board.checkOnWay(kingSquare, pinPiece.getSquare(), move.getEndSquare()));
+    }
+
   }
 
+
   protected void setHorseMove(Board curBoard, int range) {
+    CopyOnWriteArrayList<Piece>[] attackers = curBoard.getAttackers();
     Square[][] squares = curBoard.getSquareMat();
     List<Integer> changeX = Arrays.asList(1, range);
     List<Integer> changeY = Arrays.asList(range, 1);
@@ -170,11 +235,16 @@ public abstract class Piece extends GameObject {
         int resY = (int) destY / GRIDSIZE + Y_DIAGONAL_DIRECTION[i] * changeY.get(j);
         if (resX >= 0 && resX < GRIDNUM && resY >= 0 && resY < GRIDNUM) {
           Square s = squares[resX][resY];
-          if (s.getPiece() == null) {
+          Piece destPiece = s.getPiece();
+          if (destPiece == null) {
             preLegalMoves.add(new Move(curSquare, s, Move.NORMAL, this, null));
-          } else if (s.getPiece().isWhitePiece() != this.isWhite) {
+          } else if (destPiece.isWhitePiece() != this.isWhite) {
+            if (destPiece.getCode().contains("k")) {
+              attackers[isWhite ? 0 : 1].add(this);
+            }
             preLegalMoves.add(new Move(curSquare, s, Move.CAPTURE, this, s.getPiece()));
           }
+          s.underControl(isWhite);
         }
       }
     }
@@ -208,20 +278,23 @@ public abstract class Piece extends GameObject {
   }
 
   public void tick() {
-    double movementSpeed = Piece.movementSpeed;
-    if (overrideSpeed > 0) {
-      movementSpeed = overrideSpeed;
-    }
-    float distX = this.x - destX;
-    float distY = this.y - destY;
-    double distance = Math.sqrt(Math.pow(distX, 2) + Math.pow(distY, 2));
-    if (distance > movementSpeed) {
-      this.x += Math.cos(direction) * movementSpeed;
-      this.y += Math.sin(direction) * movementSpeed;
-    } else {
-      this.x = this.destX;
-      this.y = this.destY;
-      overrideSpeed = 0;
+    if (moving) {
+      double movementSpeed = Piece.movementSpeed;
+      if (overrideSpeed > 0) {
+        movementSpeed = overrideSpeed;
+      }
+      float distX = this.x - destX;
+      float distY = this.y - destY;
+      double distance = Math.sqrt(Math.pow(distX, 2) + Math.pow(distY, 2));
+      if (distance > movementSpeed) {
+        this.x += Math.cos(direction) * movementSpeed;
+        this.y += Math.sin(direction) * movementSpeed;
+      } else {
+        this.x = this.destX;
+        this.y = this.destY;
+        overrideSpeed = 0;
+        moving = false;
+      }
     }
   }
 
@@ -234,7 +307,7 @@ public abstract class Piece extends GameObject {
     this.destX = target.getX();
     this.destY = target.getY();
     this.direction = Math.atan2(destY - this.y, destX - this.x);
-    double distance = Math.sqrt(Math.pow(destX - this.x, 2) + Math.pow(destY - this.y, 2));
+    double distance = Board.distanceBetweenTwoSquares(curSquare, target);
     double time = distance / movementSpeed;
     if (time >= movementTime * FPS) {
       overrideSpeed = distance / ((movementTime * FPS) - 1);

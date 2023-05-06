@@ -23,6 +23,7 @@ public class Square extends GameObject {
   private boolean onPieceWay;
   private boolean kingChecked;
   private boolean onCaptureway;
+  private boolean[] underControl; // 1 white //2 black
   private int[] color;
 
   /**
@@ -31,6 +32,7 @@ public class Square extends GameObject {
   public Square(int x, int y, PApplet app) {
     super(x * SQUARESIZE, y * SQUARESIZE);
     color = new int[3];
+    underControl = new boolean[2];
   }
 
   public void setPiece(Piece piece) {
@@ -39,6 +41,19 @@ public class Square extends GameObject {
 
   public Piece getPiece() {
     return curPiece;
+  }
+
+  public boolean isControl(boolean isWhite) {
+    return underControl[isWhite ? 1 : 0];
+  }
+
+  public void underControl(boolean isWhite) {
+    underControl[isWhite ? 1 : 0] = true;
+  }
+
+  public void noControl() {
+    underControl[0] = false;
+    underControl[1] = false;
   }
 
   public void setColor() {

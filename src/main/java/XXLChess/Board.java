@@ -1,8 +1,10 @@
 package XXLChess;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.TreeMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import processing.core.PApplet;
 
@@ -20,6 +22,7 @@ public class Board extends GameObject {
   public static double MAX_MOVEMENT_TIME;
   private boolean whiteTurn = true;
   private Piece[] king;
+  private CopyOnWriteArrayList<Piece>[] attackers;
   private Piece selPiece;
   private Square selSquare;
   private HashMap<Character, CreatePiece> createOperations;
@@ -33,6 +36,9 @@ public class Board extends GameObject {
     super(0, 0);
     squareMat = new Square[GRIDNUM][GRIDNUM];
     king = new Piece[2];
+    attackers = new CopyOnWriteArrayList[2];
+    attackers[0] = new CopyOnWriteArrayList<>();
+    attackers[1] = new CopyOnWriteArrayList<>();
     pieceList = new CopyOnWriteArrayList<>();
     createOperations = new HashMap<>();
     createOperations.put('p', (x, y, code, square) -> new Pawn(x, y, code, square));
@@ -104,54 +110,75 @@ public class Board extends GameObject {
   public void makeMove(Move move, boolean display, boolean switchturn) {
     Piece movePiece = move.getSourcePiece();
     Square target = move.getEndSquare();
+    Square start = move.getStartSquare();
 
     if (move.getFlag() == Move.CASTLE) {
       makeMove(move.getSubMove(), display, false);
     }
 
-    Square curSquare = movePiece.getSquare();
     // if (move.promote()) {
     // movePiece = new Queen((int) movePiece.getX() / GRIDSIZE, (int) movePiece.getY() / GRIDSIZE,
     // Character.toString(movePiece.getCode().charAt(0)) + "q", curSquare);
     // }
-    pieceList.remove(target.getPiece());
+    if (move.getFlag() == Move.CAPTURE) {
+      pieceList.remove(move.getDestinationPiece());
+    }
     target.setPiece(movePiece);
-    curSquare.setPiece(null);
+    start.setPiece(null);
+    movePiece.setDestination(target);
     if (display) {
-      movePiece.setDestination(target);
-    } else {
-      movePiece.setCurSquare(curSquare);
+      movePiece.startMoving();
     }
     if (switchturn) {
-      whiteTurn = !whiteTurn;
-      resetSquares(curSquare, movePiece, target);
+      resetSquares(start, movePiece, target);
     }
+    whiteTurn = !whiteTurn;
     movePiece.setMoved(true);
+    newMoveSet();
   }
 
-  public List<Move> getAllMoves(boolean isWhite) {
+  public List<Move> getAllMoves(boolean isWhite, boolean order) {
     List<Move> result = new ArrayList<>();
     for (Piece p : pieceList) {
       if (p.isWhitePiece() == isWhite) {
         result.addAll(p.getValidMoves());
       }
     }
+    if (order) {
+      for (Move move : result) {
+        Piece sourcePiece = move.getSourcePiece();
+        double moveScore = 0;
+        if (move.getFlag() == Move.CAPTURE) {
+          moveScore = 8 * move.getDestinationPiece().getValue() - sourcePiece.getValue();
+        }
+        if (move.getFlag() == Move.PROMOTION) {
+          moveScore += 9;
+        }
+        if (move.getEndSquare().isControl(!whiteTurn) && move.getFlag() != Move.CAPTURE) {
+          moveScore -= sourcePiece.getValue();
+        }
+        move.setScore(moveScore);
+      }
+      Collections.sort(result, (a, b) -> (int) (a.getScore() - b.getScore()));
+    }
     return result;
   }
 
   public boolean checkCheck() {
-    Square kingSquare = king[whiteTurn ? 1 : 0].getSquare();
-    boolean checked = squareUnderAttack(whiteTurn, kingSquare) == null;
-    kingSquare.setKingChecked(!checked);
-    if (!checked) {
-      return true;
-    } else {
-      return false;
-    }
+    boolean check = attackers[whiteTurn ? 1 : 0].size() > 0;
+    king[whiteTurn ? 1 : 0].getSquare().setKingChecked(check);
+    return check;
   }
 
   public boolean checkCheckMate() {
-    return getAllMoves(whiteTurn).size() == 0;
+    return getAllMoves(whiteTurn, false).size() == 0;
+  }
+
+  public static boolean checkOnWay(Square start, Square end, Square check) {
+    double firstDistance = distanceBetweenTwoSquares(start, end);
+    double secondDistance = distanceBetweenTwoSquares(start, check);
+    double thirdDistance = distanceBetweenTwoSquares(end, check);
+    return firstDistance == secondDistance + thirdDistance;
   }
 
   public void displayCheckMatePiece() {
@@ -202,6 +229,19 @@ public class Board extends GameObject {
     selSquare = null;
   }
 
+  public CopyOnWriteArrayList<Piece>[] getAttackers() {
+    return attackers;
+  }
+
+  public Piece getKing(boolean isWhite) {
+    return king[isWhite ? 1 : 0];
+  }
+
+  public static double distanceBetweenTwoSquares(Square square1, Square square2) {
+    return Math.sqrt(Math.pow(square1.getX() - square2.getX(), 2)
+        + Math.pow(square1.getY() - square2.getY(), 2));
+  }
+
   public Piece squareUnderAttack(boolean isWhite, Square target) {
     for (Piece p : pieceList) {
       if (p.isWhitePiece() != isWhite) {
@@ -219,56 +259,91 @@ public class Board extends GameObject {
     for (Piece p : pieceList) {
       res += p.getValue();
     }
-
+    if (checkCheckMate()) {
+      if (!checkCheck()) {
+        return 0;
+      } else {
+        return Double.POSITIVE_INFINITY * (whiteTurn ? -1 : 1);
+      }
+    }
     return res;
   }
 
-  public double evaluateMove(Move move, int depth, double alpha, double beta) {
+  // public double evaluate(int depth, double alpha, double beta) {
+  // if (depth == 0) {
+  // return evaluateBoard();
+  // }
+  // List<Move> moveList = getAllMoves(whiteTurn);
+  // if (moveList.size() == 0) {
+  // if (checkCheck()) {
+  // return -Double.POSITIVE_INFINITY;
+  // }
+  // return 0;
+  // }
+  // for (Move move : moveList) {
+  // final boolean prevIsMoved = move.getSourcePiece().isMoved();
+  // final Piece destPiece = move.getDestinationPiece();
+  // int position = pieceList.indexOf(destPiece);
+  // makeMove(move, false, false);
+  // final double eval = -evaluate(depth - 1, -beta, -alpha);
+  // unmove(move, prevIsMoved);
+  // if (move.getFlag() == Move.CAPTURE) {
+  // pieceList.add(position, destPiece);
+  // }
+  // newMoveSet();
+  // if (eval >= beta) {
+  // return beta;
+  // }
+  // alpha = Math.max(alpha, eval);
+  // }
+
+  // return alpha;
+  // }
+
+  public double evaluateMove(Move move, int depth, double alpha, double beta, boolean maximize) {
     Piece movePiece = move.getSourcePiece();
-    double res = !movePiece.isWhitePiece() ? -Double.MAX_VALUE : Double.MAX_VALUE;
+    double res = maximize ? -Double.POSITIVE_INFINITY : Double.POSITIVE_INFINITY;
     final boolean prevIsMoved = movePiece.isMoved();
     final Piece destPiece = move.getDestinationPiece();
     int position = pieceList.indexOf(destPiece);
 
     makeMove(move, false, false);
 
-
-    if (depth == 0) {
+    if (checkCheckMate()) {
+      if (!checkCheck()) {
+        res = 0;
+      }
+      res = whiteTurn ? -Double.POSITIVE_INFINITY : Double.POSITIVE_INFINITY;
+    } else if (depth == 0) {
       res = evaluateBoard();
-      // System.out.println(movePiece.getCode() + res);
     } else {
-      for (Piece p : pieceList) {
-        if (p.isWhitePiece() != movePiece.isWhitePiece()) {
-          p.updatePreLegalMoves(this);
-          if (depth > 1) {
-            p.removeIllegalMove(this);
+      List<Move> moveList = getAllMoves(maximize, true);
+      for (Move m : moveList) {
+        if (maximize) {
+          double eval = evaluateMove(m, depth - 1, alpha, beta, false);
+          res = Math.max(res, eval);
+          beta = Math.min(beta, eval);
+          if (beta <= alpha) {
+            break;
           }
-          for (Move nextMove : p.getValidMoves()) {
-            double eval = evaluateMove(nextMove, depth - 1, alpha, beta);
-            if (movePiece.isWhitePiece()) {
-              res = Math.min(res, eval);
-              beta = Math.min(beta, eval);
-              if (beta <= alpha) {
-                break;
-              }
-            } else {
-              res = Math.max(res, eval);
-              alpha = Math.max(alpha, eval);
-              if (beta <= alpha) {
-                break;
-              }
-            }
+        } else {
+          double eval = evaluateMove(m, depth - 1, alpha, beta, true);
+          res = Math.min(res, eval);
+          alpha = Math.max(alpha, eval);
+          if (beta <= alpha) {
+            break;
           }
         }
       }
     }
+
     unmove(move, prevIsMoved);
 
-    if (position != -1) {
+    if (move.getFlag() == Move.CAPTURE) {
       pieceList.add(position, destPiece);
     }
-    System.out
-        .println(movePiece.getCode() + move.getEndSquare().getX() + move.getEndSquare().getY());
+    newMoveSet();
+    System.out.println(movePiece.code + " " + depth + " " + res);
     return res;
   }
 
@@ -279,22 +354,36 @@ public class Board extends GameObject {
     if (move.getFlag() == Move.CASTLE) {
       unmove(move.getSubMove(), false);
     }
+    whiteTurn = !whiteTurn;
     // if (move.promote()) {
     // movePiece = new Pawn()
     // }
     endSquare.setPiece(move.getDestinationPiece());
     startSquare.setPiece(movePiece);
-    movePiece.setCurSquare(startSquare);
+    movePiece.setDestination(startSquare);
     movePiece.setMoved(isMoved);
   }
 
   public void newMoveSet() {
-    for (Piece p : pieceList) {
-      if (p.isWhitePiece() == this.isWhiteTurn()) {
-        p.updatePreLegalMoves(this);
-        p.removeIllegalMove(this);
+    for (int i = 0; i < GRIDNUM; i++) {
+      for (int j = 0; j < GRIDNUM; j++) {
+        squareMat[i][j].noControl();
       }
     }
+    attackers[0].removeAll(attackers[0]);
+    attackers[1].removeAll(attackers[1]);
+    for (Piece p : pieceList) {
+      p.setPinPiece(null);
+    }
+    for (Piece p : pieceList) {
+      p.updatePreLegalMoves(this);
+    }
+    for (Piece p : pieceList) {
+      p.updateLegalMove(this);
+    }
+    // for (int i = 0; i < pieceList.size(); i++) {
+    // System.out.print(pieceList.get(i).getCode() + " ");
+    // }
   }
 
   public boolean isWhiteTurn() {

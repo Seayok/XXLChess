@@ -1,5 +1,5 @@
 {
-  "layout": "mateinone.txt",
+  "layout": "stalemate.txt",
   "time_controls": {
     "player": {
       "seconds": 30,
