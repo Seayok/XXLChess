@@ -25,6 +25,8 @@ public abstract class Piece extends GameObject {
   private double overrideSpeed;
   protected float destX;
   protected float destY;
+  protected float displayX;
+  protected float displayY;
   protected Square curSquare;
   protected boolean isMoved;
   protected double direction;
@@ -42,6 +44,8 @@ public abstract class Piece extends GameObject {
     this.curSquare = curSquare;
     destX = x;
     destY = y;
+    displayX = x;
+    displayY = y;
     direction = 0;
     this.code = code;
     if (code.charAt(0) == 'w') {
@@ -75,7 +79,15 @@ public abstract class Piece extends GameObject {
   }
 
   public void startMoving() {
-    this.moving = true;
+    displayX = destX;
+    displayY = destY;
+    this.direction = Math.atan2(destY - this.y, destX - this.x);
+    double distance = Math.sqrt(Math.pow(displayX - this.x, 2) + Math.pow(displayY - this.y, 2));
+    double time = distance / Piece.movementSpeed;
+    if (time >= movementTime * FPS - 1) {
+      overrideSpeed = distance / ((movementTime * FPS) - 1);
+    }
+
   }
 
   public void setPinPiece(Piece pin) {
@@ -278,24 +290,21 @@ public abstract class Piece extends GameObject {
   }
 
   public void tick() {
-    if (moving) {
-      double movementSpeed = Piece.movementSpeed;
-      if (overrideSpeed > 0) {
-        movementSpeed = overrideSpeed;
-      }
-      System.out.println(movementSpeed);
-      float distX = this.x - destX;
-      float distY = this.y - destY;
-      double distance = Math.sqrt(Math.pow(distX, 2) + Math.pow(distY, 2));
-      if (distance > movementSpeed) {
-        this.x += Math.cos(direction) * movementSpeed;
-        this.y += Math.sin(direction) * movementSpeed;
-      } else {
-        this.x = this.destX;
-        this.y = this.destY;
-        overrideSpeed = 0;
-        moving = false;
-      }
+    double movementSpeed = Piece.movementSpeed;
+    if (overrideSpeed > 0) {
+      movementSpeed = overrideSpeed;
+    }
+    float distX = this.x - displayX;
+    float distY = this.y - displayY;
+    double distance = Math.sqrt(Math.pow(distX, 2) + Math.pow(distY, 2));
+    if (distance > movementSpeed) {
+      this.x += Math.cos(direction) * movementSpeed;
+      this.y += Math.sin(direction) * movementSpeed;
+    } else {
+      this.x = this.destX;
+      this.y = this.destY;
+      overrideSpeed = 0;
+      moving = false;
     }
   }
 
@@ -307,12 +316,6 @@ public abstract class Piece extends GameObject {
     this.curSquare = target;
     this.destX = target.getX();
     this.destY = target.getY();
-    this.direction = Math.atan2(destY - this.y, destX - this.x);
-    double distance = Board.distanceBetweenTwoSquares(curSquare, target);
-    double time = distance / movementSpeed;
-    if (time >= movementTime * FPS) {
-      overrideSpeed = distance / ((movementTime * FPS) - 1);
-    }
   }
 
   public float getDesX() {

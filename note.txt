@@ -1,5 +1,5 @@
 fix promotion
-null things
+add evaluation function
 testcase
 Report + UML +Comments + Style
 Extension
