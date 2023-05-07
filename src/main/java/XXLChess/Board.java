@@ -110,23 +110,27 @@ public class Board extends GameObject {
       }
       return 0;
     } else {
-      makeMove(selPiece.getMoveFromSquare(target, true), true, true);
+      makeMove(selPiece.getMoveFromSquare(target, true), true, true, false);
       return 2;
     }
   }
 
-  public void makeMove(Move move, boolean display, boolean switchturn) {
-    final Piece movePiece = move.getSourcePiece();
+  public void makeMove(Move move, boolean display, boolean switchturn, boolean submove) {
+
+    Piece movePiece = move.getSourcePiece();
     final Square target = move.getEndSquare();
     final Square start = move.getStartSquare();
 
     if (move.getFlag() == Move.CASTLE) {
-      makeMove(move.getSubMove(), display, false);
+      makeMove(move.getSubMove(), display, false, true);
     }
 
-    // if (move.promote()) {
-    // movePiece = new Queen((int) movePiece.getX() / GRIDSIZE, (int) movePiece.getY() / GRIDSIZE,
-    // Character.toString(movePiece.getCode().charAt(0)) + "q", curSquare);
+    // if (move.isPromotion()) {
+    // pieceList.remove(movePiece);
+    // movePiece = new Queen(movePiece.getDesX(), movePiece.getDesY(),
+    // Character.toString(movePiece.getCode().charAt(0)) + "q", start);
+    // move.setPromotedPiece(movePiece);
+    // pieceList.add(movePiece);
     // }
     if (move.getFlag() == Move.CAPTURE) {
       pieceList.remove(move.getDestinationPiece());
@@ -136,13 +140,18 @@ public class Board extends GameObject {
     movePiece.setDestination(target);
     if (display) {
       movePiece.startMoving();
+      if (move.isPromotion()) {
+        movePiece.setPromotedSprite();
+      }
     }
     if (switchturn) {
       resetSquares(start, movePiece, target);
     }
-    whiteTurn = !whiteTurn;
     movePiece.setMoved(true);
-    newMoveSet();
+    if (!submove) {
+      whiteTurn = !whiteTurn;
+      newMoveSet();
+    }
   }
 
   public List<Move> getAllMoves(boolean isWhite, boolean order) {
@@ -160,7 +169,7 @@ public class Board extends GameObject {
           moveScore = 8 * Math.abs(move.getDestinationPiece().getValue())
               - Math.abs(sourcePiece.getValue());
         }
-        if (move.getFlag() == Move.PROMOTION) {
+        if (move.isPromotion()) {
           moveScore += 9;
         }
         if (move.getEndSquare().isControl(!whiteTurn) && move.getFlag() != Move.CAPTURE) {
@@ -273,7 +282,7 @@ public class Board extends GameObject {
     double dstxToOpponent = Math.abs(ourKing.getDesX() - theirKing.getDesX()) / GRIDSIZE;
     double dstyToOpponent = Math.abs(ourKing.getDesY() - theirKing.getDesY()) / GRIDSIZE;
     eval += dstxToCenter + dstyToCenter;
-    eval += (26 - dstxToOpponent - dstyToOpponent) / 26;
+    eval += (26 - dstxToOpponent - dstyToOpponent) / 260;
     return eval * (56 - pieceList.size()) / 600;
   }
 
@@ -281,14 +290,16 @@ public class Board extends GameObject {
     double res = 0;
     for (Piece p : pieceList) {
       res += p.getValue();
-      if (!p.getCode().contains("k")) {
-        double pawnWeight = (p.getCode().contains("p") ? 3 : 1);
-        res +=
-            (pieceSquareTables[(int) p.getDesX() / GRIDSIZE + 14 * (int) (p.getDesY() / GRIDSIZE)]
-                * (p.isWhitePiece() ? 1 : -1) * pieceList.size() * pawnWeight) / 600;
-      } else {
-        if (p.isMoved()) {
-          res += 0.5 * (p.isWhitePiece() ? 1 : -1);
+      if (pieceList.size() > 10) {
+        if (!p.getCode().contains("k")) {
+          double pawnWeight = (p.getCode().contains("p") ? 3 : 1);
+          res +=
+              (pieceSquareTables[(int) p.getDesX() / GRIDSIZE + 14 * (int) (p.getDesY() / GRIDSIZE)]
+                  * (p.isWhitePiece() ? 1 : -1) * pieceList.size() * pawnWeight) / 600;
+        } else {
+          if (p.isMoved()) {
+            res += 0.5 * (p.isWhitePiece() ? 1 : -1);
+          }
         }
       }
     }
@@ -308,9 +319,9 @@ public class Board extends GameObject {
     double res = maximize ? -Double.POSITIVE_INFINITY : Double.POSITIVE_INFINITY;
     final boolean prevIsMoved = movePiece.isMoved();
     final Piece destPiece = move.getDestinationPiece();
-    int position = pieceList.indexOf(destPiece);
+    final int position = pieceList.indexOf(destPiece);
 
-    makeMove(move, false, false);
+    makeMove(move, false, false, false);
     double evalCur = evaluateBoard();
     if (maximize) {
       res = Math.max(res, evalCur);
@@ -347,7 +358,7 @@ public class Board extends GameObject {
       }
     }
 
-    unmove(move, prevIsMoved);
+    unmove(move, prevIsMoved, false);
 
     pieceList.add(position, destPiece);
     newMoveSet();
@@ -359,9 +370,10 @@ public class Board extends GameObject {
     double res = maximize ? -Double.POSITIVE_INFINITY : Double.POSITIVE_INFINITY;
     final boolean prevIsMoved = movePiece.isMoved();
     final Piece destPiece = move.getDestinationPiece();
+    int startPosition = pieceList.indexOf(movePiece);
     int position = pieceList.indexOf(destPiece);
 
-    makeMove(move, false, false);
+    makeMove(move, false, false, false);
 
     if (checkCheckMate()) {
       if (!checkCheck()) {
@@ -404,7 +416,13 @@ public class Board extends GameObject {
       }
     }
 
-    unmove(move, prevIsMoved);
+    unmove(move, prevIsMoved, false);
+
+    // if (move.isPromotion()) {
+    // pieceList.remove(move.getPromotedPiece());
+    // int offset = (move.getFlag() == Move.CAPTURE && position < startPosition) ? 1 : 0;
+    // pieceList.add(startPosition - offset, movePiece);
+    // }
 
     if (move.getFlag() == Move.CAPTURE) {
       pieceList.add(position, destPiece);
@@ -413,17 +431,16 @@ public class Board extends GameObject {
     return res;
   }
 
-  public void unmove(Move move, boolean isMoved) {
+  public void unmove(Move move, boolean isMoved, boolean submove) {
     final Piece movePiece = move.getSourcePiece();
     final Square startSquare = move.getStartSquare();
     final Square endSquare = move.getEndSquare();
     if (move.getFlag() == Move.CASTLE) {
-      unmove(move.getSubMove(), false);
+      unmove(move.getSubMove(), false, true);
     }
-    whiteTurn = !whiteTurn;
-    // if (move.promote()) {
-    // movePiece = new Pawn()
-    // }
+    if (!submove) {
+      whiteTurn = !whiteTurn;
+    }
     endSquare.setPiece(move.getDestinationPiece());
     startSquare.setPiece(movePiece);
     movePiece.setDestination(startSquare);

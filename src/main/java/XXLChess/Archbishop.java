@@ -2,7 +2,7 @@ package XXLChess;
 
 public class Archbishop extends Piece {
 
-  public Archbishop(int x, int y, String code, Square curSquare) {
+  public Archbishop(float x, float y, String code, Square curSquare) {
     super(x, y, code, curSquare);
     this.value = 7.5 * (this.isWhite ? 1 : -1);
   }

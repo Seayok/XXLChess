@@ -10,6 +10,8 @@ import processing.core.PImage;
 public abstract class Piece extends GameObject {
   public static final int GRIDNUM = Board.GRIDNUM;
   public static final int GRIDSIZE = Board.GRIDSIZE;
+  public static PImage BLACK_QUEEN_IMAGE;
+  public static PImage WHITE_QUEEN_IMAGE;
   public static final int FPS = 60;
   public static final int DIRECTION_NUMBER = 4;
   protected static final int HORSE_RANGE = 2;
@@ -39,7 +41,7 @@ public abstract class Piece extends GameObject {
   protected CopyOnWriteArrayList<Move> preLegalMoves = new CopyOnWriteArrayList<Move>();
   protected boolean isWhite;
 
-  public Piece(int x, int y, String code, Square curSquare) {
+  public Piece(float x, float y, String code, Square curSquare) {
     super(x, y);
     this.curSquare = curSquare;
     destX = x;
@@ -71,6 +73,16 @@ public abstract class Piece extends GameObject {
   public void setSprite(PApplet app) {
     String dir = "src/main/resources/XXLChess/" + code + ".png";
     this.sprite = app.loadImage(dir);
+    this.sprite.resize(GRIDSIZE, GRIDSIZE);
+
+    if (WHITE_QUEEN_IMAGE == null) {
+      WHITE_QUEEN_IMAGE = app.loadImage("src/main/resources/XXLChess/wq.png");
+      BLACK_QUEEN_IMAGE = app.loadImage("src/main/resources/XXLChess/bq.png");
+    }
+  }
+
+  public void setPromotedSprite() {
+    this.sprite = isWhite ? WHITE_QUEEN_IMAGE : BLACK_QUEEN_IMAGE;
     this.sprite.resize(GRIDSIZE, GRIDSIZE);
   }
 
@@ -142,7 +154,7 @@ public abstract class Piece extends GameObject {
         Square s = squares[resX][resY];
         Piece destPiece = s.getPiece();
         if (destPiece == null) {
-          if (!(this.code.toLowerCase().contains("p") && dirX != 0) && occur - kingOccur == 0) {
+          if (!(this.code.contains("p") && dirX != 0) && occur - kingOccur == 0) {
             preLegalMoves.add(new Move(curSquare, s, Move.NORMAL, this, null));
             s.underControl(isWhite);
           }
@@ -166,6 +178,8 @@ public abstract class Piece extends GameObject {
                 preLegalMoves.add(new Move(curSquare, s, Move.CAPTURE, this, destPiece));
                 s.underControl(isWhite);
               }
+            } else {
+              break;
             }
           } else {
             s.underControl(isWhite);
@@ -200,6 +214,10 @@ public abstract class Piece extends GameObject {
         if (!move.getEndSquare().isControl(!isWhite)) {
           validMoves.add(move);
         }
+        if (move.getFlag() == Move.CASTLE
+            && (move.getSubMove().getSourcePiece().getPinPiece() != null || attackers.size() > 0)) {
+          validMoves.remove(move);
+        }
       }
       return;
     }
@@ -233,6 +251,10 @@ public abstract class Piece extends GameObject {
           move -> !Board.checkOnWay(kingSquare, pinPiece.getSquare(), move.getEndSquare()));
     }
 
+  }
+
+  public Piece getPinPiece() {
+    return pinPiece;
   }
 
 

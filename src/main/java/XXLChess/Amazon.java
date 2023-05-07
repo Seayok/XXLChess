@@ -2,7 +2,7 @@ package XXLChess;
 
 public class Amazon extends Piece {
 
-  public Amazon(int x, int y, String code, Square curSquare) {
+  public Amazon(float x, float y, String code, Square curSquare) {
     super(x, y, code, curSquare);
     this.value = 12 * (this.isWhite ? 1 : -1);
   }

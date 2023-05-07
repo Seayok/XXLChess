@@ -1,7 +1,7 @@
 package XXLChess;
 
 public class Pawn extends Piece {
-  public Pawn(int x, int y, String code, Square curSquare) {
+  public Pawn(float x, float y, String code, Square curSquare) {
     super(x, y, code, curSquare);
     this.value = this.isWhite ? 1 : -1;
   }

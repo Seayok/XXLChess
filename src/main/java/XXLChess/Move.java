@@ -5,7 +5,6 @@ public class Move {
   public static final int CAPTURE = 1;
   public static final int CASTLE = 2;
   public static final int THREAT = 3;
-  public static final int PROMOTION = 4;
 
 
   private Square startSquare;
@@ -13,6 +12,7 @@ public class Move {
   private boolean promotion;
   private int flag;
   private double score;
+  private Piece promotedPiece;
   private Piece sourcePiece;
   private Piece destPiece;
   private Move subMove;
@@ -30,6 +30,18 @@ public class Move {
     this.score = score;
   }
 
+  public void setPromotedPiece(Piece piece) {
+    this.promotedPiece = piece;
+  }
+
+  public Piece getPromotedPiece() {
+    return promotedPiece;
+  }
+
+  public boolean isPromotion() {
+    return promotion;
+  }
+
   public double getScore() {
     return score;
   }
@@ -40,10 +52,6 @@ public class Move {
 
   public void promotion() {
     this.promotion = true;
-  }
-
-  public boolean promote() {
-    return promotion;
   }
 
   public void setSubMove(Move subMove) {

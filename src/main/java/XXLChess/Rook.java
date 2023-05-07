@@ -1,7 +1,7 @@
 package XXLChess;
 
 public class Rook extends Piece {
-  public Rook(int x, int y, String code, Square curSquare) {
+  public Rook(float x, float y, String code, Square curSquare) {
     super(x, y, code, curSquare);
     this.value = 5.25 * (this.isWhite ? 1 : -1);
   }

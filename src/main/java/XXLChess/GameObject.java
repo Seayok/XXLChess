@@ -5,7 +5,6 @@ import processing.core.PApplet;
 public abstract class GameObject {
 
   protected float x;
-
   protected float y;
 
   /**

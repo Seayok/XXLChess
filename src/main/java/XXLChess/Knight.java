@@ -1,7 +1,7 @@
 package XXLChess;
 
 public class Knight extends Piece {
-  public Knight(int x, int y, String code, Square curSquare) {
+  public Knight(float x, float y, String code, Square curSquare) {
     super(x, y, code, curSquare);
   }
 

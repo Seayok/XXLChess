@@ -73,7 +73,7 @@ public class Player {
     } else if (this.moveToPlay == null) {
       return 0;
     } else {
-      curBoard.makeMove(moveToPlay, true, true);
+      curBoard.makeMove(moveToPlay, true, true, false);
       this.curBoard = null;
       this.calculating = false;
       this.moveToPlay = null;
