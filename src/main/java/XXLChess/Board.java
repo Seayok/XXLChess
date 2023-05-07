@@ -23,7 +23,7 @@ public class Board extends GameObject {
       15, 15, 10, 10, 5, 0, 0, 5, 10, 10, 15, 15, 20, 20, 15, 15, 10, 10, 5, 0, 0, 0, 5, 10, 10, 15,
       15, 15, 15, 10, 10, 5, 0, 0, 0, 0, 0, 5, 10, 10, 10, 10, 10, 10, 5, 0, 0, 0, -5, 0, 0, 0, 5,
       5, 5, 5, 5, 5, 0, 0, 0, -5, -10, 0, 0, 0, 5, 5, 5, 5, 5, 5, 0, 0, 0, -10, -10, -5, 0, 0, 0, 0,
-      0, 0, 0, 0, 0, 0, -5, -10, -20, -15, -10, -10, -10, -5, -5, -5, -5, -10, -10, -10, -15, -20,};
+      0, 0, 0, 0, 0, 0, -5, -10, -20, -15, -10, -10, -10, -5, -5, -5, -5, -10, -10, -10, -15, -20};
   public static final int GRIDSIZE = 48;
   public static final int GRIDNUM = 14;
   public static double MAX_MOVEMENT_TIME;
@@ -67,7 +67,6 @@ public class Board extends GameObject {
         if (!levelArr[j][i].equals(" ")) {
           Piece newPiece = createOperations.get(levelArr[j][i].charAt(1)).makeNewPiece(i * GRIDSIZE,
               j * GRIDSIZE, levelArr[j][i], squareMat[i][j]);
-          newPiece.setSprite(app);
           pieceList.add(newPiece);
           squareMat[i][j].setPiece(newPiece);
           if (levelArr[j][i].charAt(1) == 'k') {
@@ -77,7 +76,17 @@ public class Board extends GameObject {
       }
     }
     newMoveSet();
+  }
+
+  public void setSpriteAndDisplay(PApplet app) {
+    for (Piece piece : pieceList) {
+      piece.setSprite(app);
+    }
     draw(app);
+  }
+
+  public List<Piece> getPieceList() {
+    return pieceList;
   }
 
   public int startClick(int x, int y) {
@@ -110,28 +119,28 @@ public class Board extends GameObject {
       }
       return 0;
     } else {
-      makeMove(selPiece.getMoveFromSquare(target, true), true, true, false);
+      makeMove(selPiece.getMoveFromSquare(target, true), true, false);
       return 2;
     }
   }
 
-  public void makeMove(Move move, boolean display, boolean switchturn, boolean submove) {
+  public void makeMove(Move move, boolean display, boolean submove) {
 
     Piece movePiece = move.getSourcePiece();
     final Square target = move.getEndSquare();
     final Square start = move.getStartSquare();
 
     if (move.getFlag() == Move.CASTLE) {
-      makeMove(move.getSubMove(), display, false, true);
+      makeMove(move.getSubMove(), display, true);
     }
 
-    // if (move.isPromotion()) {
-    // pieceList.remove(movePiece);
-    // movePiece = new Queen(movePiece.getDesX(), movePiece.getDesY(),
-    // Character.toString(movePiece.getCode().charAt(0)) + "q", start);
-    // move.setPromotedPiece(movePiece);
-    // pieceList.add(movePiece);
-    // }
+    if (move.isPromotion()) {
+      pieceList.remove(movePiece);
+      movePiece = new Queen(movePiece.getDesX(), movePiece.getDesY(),
+          Character.toString(movePiece.getCode().charAt(0)) + "q", start);
+      move.setPromotedPiece(movePiece);
+      pieceList.add(movePiece);
+    }
     if (move.getFlag() == Move.CAPTURE) {
       pieceList.remove(move.getDestinationPiece());
     }
@@ -143,8 +152,6 @@ public class Board extends GameObject {
       if (move.isPromotion()) {
         movePiece.setPromotedSprite();
       }
-    }
-    if (switchturn) {
       resetSquares(start, movePiece, target);
     }
     movePiece.setMoved(true);
@@ -203,18 +210,20 @@ public class Board extends GameObject {
   public void displayCheckMatePiece() {
     List<Square> occupiedSquare = new ArrayList<>();
     Piece kingPiece = king[whiteTurn ? 1 : 0];
-    List<Move> kingSquares = new ArrayList<>(kingPiece.getPreLegalMoves());
+    List<Move> kingMoves = new ArrayList<>(kingPiece.getPreLegalMoves());
     Square kingSquare = kingPiece.getSquare();
-    kingSquares.add(new Move(kingPiece.getSquare(), kingSquare, Move.NORMAL, kingPiece, null));
+    kingMoves.add(new Move(kingPiece.getSquare(), kingSquare, Move.NORMAL, kingPiece, null));
     kingSquare.setPiece(null);
-    for (Move m : kingSquares) {
+    for (Move m : kingMoves) {
       Square s = m.getEndSquare();
       Piece p = squareUnderAttack(whiteTurn, s);
       if (p == null) {
         Piece prevPiece = s.getPiece();
         s.setPiece(null);
+        newMoveSet();
         p = squareUnderAttack(whiteTurn, s);
         s.setPiece(prevPiece);
+        newMoveSet();
       }
       System.out.print(s.getX() / 48 + " " + s.getY() / 48 + " ");
       System.out.println(p.getCode());
@@ -319,9 +328,10 @@ public class Board extends GameObject {
     double res = maximize ? -Double.POSITIVE_INFINITY : Double.POSITIVE_INFINITY;
     final boolean prevIsMoved = movePiece.isMoved();
     final Piece destPiece = move.getDestinationPiece();
+    int startPosition = pieceList.indexOf(movePiece);
     final int position = pieceList.indexOf(destPiece);
 
-    makeMove(move, false, false, false);
+    makeMove(move, false, false);
     double evalCur = evaluateBoard();
     if (maximize) {
       res = Math.max(res, evalCur);
@@ -359,6 +369,11 @@ public class Board extends GameObject {
     }
 
     unmove(move, prevIsMoved, false);
+    if (move.isPromotion()) {
+      pieceList.remove(move.getPromotedPiece());
+      int offset = (move.getFlag() == Move.CAPTURE && position < startPosition) ? 1 : 0;
+      pieceList.add(startPosition - offset, movePiece);
+    }
 
     pieceList.add(position, destPiece);
     newMoveSet();
@@ -373,7 +388,7 @@ public class Board extends GameObject {
     int startPosition = pieceList.indexOf(movePiece);
     int position = pieceList.indexOf(destPiece);
 
-    makeMove(move, false, false, false);
+    makeMove(move, false, false);
 
     if (checkCheckMate()) {
       if (!checkCheck()) {
@@ -418,11 +433,11 @@ public class Board extends GameObject {
 
     unmove(move, prevIsMoved, false);
 
-    // if (move.isPromotion()) {
-    // pieceList.remove(move.getPromotedPiece());
-    // int offset = (move.getFlag() == Move.CAPTURE && position < startPosition) ? 1 : 0;
-    // pieceList.add(startPosition - offset, movePiece);
-    // }
+    if (move.isPromotion()) {
+      pieceList.remove(move.getPromotedPiece());
+      int offset = (move.getFlag() == Move.CAPTURE && position < startPosition) ? 1 : 0;
+      pieceList.add(startPosition - offset, movePiece);
+    }
 
     if (move.getFlag() == Move.CAPTURE) {
       pieceList.add(position, destPiece);

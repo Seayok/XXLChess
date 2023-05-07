@@ -93,8 +93,8 @@ public abstract class Piece extends GameObject {
   public void startMoving() {
     displayX = destX;
     displayY = destY;
-    this.direction = Math.atan2(destY - this.y, destX - this.x);
-    double distance = Math.sqrt(Math.pow(displayX - this.x, 2) + Math.pow(displayY - this.y, 2));
+    this.direction = Math.atan2(destY - cordY, destX - cordX);
+    double distance = Math.sqrt(Math.pow(displayX - cordX, 2) + Math.pow(displayY - cordY, 2));
     double time = distance / Piece.movementSpeed;
     if (time >= movementTime * FPS - 1) {
       overrideSpeed = distance / ((movementTime * FPS) - 1);
@@ -316,15 +316,15 @@ public abstract class Piece extends GameObject {
     if (overrideSpeed > 0) {
       movementSpeed = overrideSpeed;
     }
-    float distX = this.x - displayX;
-    float distY = this.y - displayY;
+    float distX = cordX - displayX;
+    float distY = cordY - displayY;
     double distance = Math.sqrt(Math.pow(distX, 2) + Math.pow(distY, 2));
     if (distance > movementSpeed) {
-      this.x += Math.cos(direction) * movementSpeed;
-      this.y += Math.sin(direction) * movementSpeed;
+      cordX += Math.cos(direction) * movementSpeed;
+      cordY += Math.sin(direction) * movementSpeed;
     } else {
-      this.x = this.destX;
-      this.y = this.destY;
+      cordX = this.destX;
+      cordY = this.destY;
       overrideSpeed = 0;
       moving = false;
     }
@@ -366,6 +366,6 @@ public abstract class Piece extends GameObject {
    */
   public void draw(PApplet app) {
     tick();
-    app.image(this.sprite, this.x, this.y);
+    app.image(this.sprite, cordX, cordY);
   }
 }

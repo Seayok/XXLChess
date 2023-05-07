@@ -65,6 +65,7 @@ public class App extends PApplet {
     clockBlack.stop(false);
     board = new Board(helper.loadBoard(), this);
     game = new Game(board, this, player1, player2, clockBlack, clockWhite, textBox);
+    board.setSpriteAndDisplay(this);
   }
 
   /**

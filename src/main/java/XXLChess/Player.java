@@ -1,7 +1,6 @@
 package XXLChess;
 
 import java.util.List;
-import processing.core.PApplet;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import processing.data.JSONObject;
@@ -49,14 +48,6 @@ public class Player {
     return clock;
   }
 
-  public void endTurn() {
-    this.clock.stop(true);
-  }
-
-  public void startTurn(PApplet app) {
-    this.clock.start(app);
-  }
-
   public boolean isCalculating() {
     return calculating;
   }
@@ -73,7 +64,7 @@ public class Player {
     } else if (this.moveToPlay == null) {
       return 0;
     } else {
-      curBoard.makeMove(moveToPlay, true, true, false);
+      curBoard.makeMove(moveToPlay, true, false);
       this.curBoard = null;
       this.calculating = false;
       this.moveToPlay = null;
@@ -113,7 +104,6 @@ public class Player {
         depth--;
       }
       moveToPlay = resMove;
-      System.out.println(miniMax);
     }
   }
 

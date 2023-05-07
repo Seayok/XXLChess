@@ -139,11 +139,11 @@ public class Square extends GameObject {
     tick();
     app.noStroke();
     app.fill(color[0], color[1], color[2]);
-    app.rect(this.x, this.y, SQUARESIZE, SQUARESIZE);
-    if ((x + y) / 48 % 2 == 1) {
+    app.rect(cordX, cordY, SQUARESIZE, SQUARESIZE);
+    if ((cordX + cordY) / 48 % 2 == 1) {
       app.noStroke();
       app.fill(60, 10, 0, 100);
-      app.rect(this.x, this.y, SQUARESIZE, SQUARESIZE);
+      app.rect(cordX, cordY, SQUARESIZE, SQUARESIZE);
     }
   }
 }

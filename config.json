@@ -1,12 +1,12 @@
 {
-  "layout": "testcastle.txt",
+  "layout": "matetest.txt",
   "time_controls": {
     "player": {
-      "seconds": 30,
+      "seconds": 180,
       "increment": 2
     },
     "cpu": {
-      "seconds": 30,
+      "seconds": 180,
       "increment": 2
     }
   },

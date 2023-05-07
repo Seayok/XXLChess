@@ -95,8 +95,8 @@ public class Game {
   }
 
   public void mouseClicked(int x, int y) {
-    // if (!gameOver && x < board.getSize() && y < board.getSize()) {
-    if (!gameOver && x < board.getSize() && y < board.getSize() && !curPlayer.isBot()) {
+    if (!gameOver && x < board.getSize() && y < board.getSize()) {
+      // if (!gameOver && x < board.getSize() && y < board.getSize() && !curPlayer.isBot()) {
       if (moveState == 0) {
         moveState = board.startClick(x, y);
       } else {
@@ -114,9 +114,9 @@ public class Game {
   }
 
   public void draw(PApplet app) {
-    if (curPlayer.isBot() && !gameOver) {
-      processMoveState(curPlayer.guessMove(board, prevVal));
-    }
+    // if (curPlayer.isBot() && !gameOver) {
+    // processMoveState(curPlayer.guessMove(board, prevVal));
+    // }
     textBox.draw(app);
     if (!curPlayer.isCalculating()) {
       board.draw(app);

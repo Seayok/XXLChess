@@ -30,6 +30,4 @@ public class Pawn extends Piece {
     this.code = Character.toString(this.code.charAt(0)) + "q";
     this.value = (isWhite ? 1 : -1) * 9.5;
   }
-
-  public void unpromote() {}
 }

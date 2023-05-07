@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Message.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">chess_origin</a> &gt; <a href="index.source.html" class="el_package">XXLChess</a> &gt; <span class="el_source">Message.java</span></div><h1>Message.java</h1><pre class="source lang-java linenums">package XXLChess;
+
+import processing.core.PApplet;
+
+public class Message extends GameObject {
+  private float size;
+  private String text;
+
+  public Message(float x, float y, float size) {
+<span class="fc" id="L10">    super(x, y);</span>
+<span class="fc" id="L11">    text = &quot;&quot;;</span>
+<span class="fc" id="L12">    this.size = size;</span>
+<span class="fc" id="L13">  }</span>
+
+  public float getSize() {
+<span class="fc" id="L16">    return size;</span>
+  }
+
+  public String getText() {
+<span class="fc" id="L20">    return text;</span>
+  }
+
+  public void checkWarning() {
+<span class="nc" id="L24">    this.text = &quot;Your king is\nin check!\n\n\nYou must defend\nyour king!&quot;;</span>
+<span class="nc" id="L25">    this.size = 13;</span>
+<span class="nc" id="L26">  }</span>
+
+  public void timeOver(Player curPlayer) {
+<span class="nc bnc" id="L29" title="All 2 branches missed.">    String status = curPlayer.isBot() ? &quot;won&quot; : &quot;lost&quot;;</span>
+<span class="nc" id="L30">    this.text = &quot;You &quot; + status + &quot;\non time!\n\n\nPress 'r' to restart\nthe game&quot;;</span>
+<span class="nc" id="L31">    this.size = 13;</span>
+<span class="nc" id="L32">  }</span>
+
+  public void checkMessage() {
+<span class="nc" id="L35">    this.text = &quot;Check!&quot;;</span>
+<span class="nc" id="L36">    this.size = 24;</span>
+<span class="nc" id="L37">  }</span>
+
+  public void checkMate(Player curPlayer) {
+<span class="nc bnc" id="L40" title="All 2 branches missed.">    String status = curPlayer.isBot() ? &quot;won&quot; : &quot;lost&quot;;</span>
+<span class="nc" id="L41">    this.text = &quot;You &quot; + status + &quot; by\ncheckmate!\n\n\nPress 'r' to restart\nthe game&quot;;</span>
+<span class="nc" id="L42">    this.size = 13;</span>
+<span class="nc" id="L43">  }</span>
+
+  public void resign() {
+<span class="nc" id="L46">    this.text = &quot;You resign!\n\n\nPress 'r' to restart\nthe game&quot;;</span>
+<span class="nc" id="L47">    this.size = 13;</span>
+<span class="nc" id="L48">  }</span>
+
+  public void hide() {
+<span class="fc" id="L51">    this.text = &quot;&quot;;</span>
+<span class="fc" id="L52">  }</span>
+
+  public void drawMessage() {
+<span class="nc" id="L55">    this.text = &quot;Stalemate - draw&quot;;</span>
+<span class="nc" id="L56">    this.size = 13;</span>
+<span class="nc" id="L57">  }</span>
+
+  @Override
+  public void draw(PApplet app) {
+<span class="nc" id="L61">    app.fill(255);</span>
+<span class="nc" id="L62">    app.textSize(size);</span>
+<span class="nc" id="L63">    app.text(this.text, this.x, this.y);</span>
+<span class="nc" id="L64">  }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span></div></body></html>

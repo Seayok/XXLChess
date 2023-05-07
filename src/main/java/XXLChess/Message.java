@@ -12,6 +12,14 @@ public class Message extends GameObject {
     this.size = size;
   }
 
+  public float getSize() {
+    return size;
+  }
+
+  public String getText() {
+    return text;
+  }
+
   public void checkWarning() {
     this.text = "Your king is\nin check!\n\n\nYou must defend\nyour king!";
     this.size = 13;
@@ -52,6 +60,6 @@ public class Message extends GameObject {
   public void draw(PApplet app) {
     app.fill(255);
     app.textSize(size);
-    app.text(this.text, this.x, this.y);
+    app.text(this.text, cordX, cordY);
   }
 }

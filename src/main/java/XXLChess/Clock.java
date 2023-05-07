@@ -56,6 +56,6 @@ public class Clock extends GameObject {
     String s = String.format("%02d:%02d", min, sec);
     app.fill(255);
     app.textSize(24);
-    app.text(s, this.x, this.y);
+    app.text(s, cordX, cordY);
   }
 }

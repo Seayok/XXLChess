@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="XXLChess.TestConfig2" tests="3" skipped="0" failures="0" errors="0" timestamp="2023-05-07T06:48:53" hostname="192-168-1-101.tpgi.com.au" time="0.017">
+  <properties/>
+  <testcase name="testBoard()" classname="XXLChess.TestConfig2" time="0.006"/>
+  <testcase name="testTimer()" classname="XXLChess.TestConfig2" time="0.004"/>
+  <testcase name="testMessage()" classname="XXLChess.TestConfig2" time="0.003"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>
