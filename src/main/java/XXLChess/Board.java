@@ -16,6 +16,14 @@ interface CreatePiece {
  * Represents a board.
  */
 public class Board extends GameObject {
+  public static final int[] pieceSquareTables = {-20, -15, -10, -10, -10, -5, -5, -5, -5, -10, -10,
+      -10, -15, -20, -10, -5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -5, -10, -10, 0, 0, 0, 5, 5, 5, 5, 5, 5,
+      0, 0, 0, -10, -5, 0, 0, 0, 5, 5, 5, 5, 5, 5, 0, 0, 0, -5, 0, 0, 0, 5, 10, 10, 10, 10, 10, 10,
+      5, 0, 0, 0, 0, 0, 5, 10, 10, 15, 15, 15, 15, 10, 10, 5, 0, 0, 0, 5, 10, 10, 15, 15, 20, 20,
+      15, 15, 10, 10, 5, 0, 0, 5, 10, 10, 15, 15, 20, 20, 15, 15, 10, 10, 5, 0, 0, 0, 5, 10, 10, 15,
+      15, 15, 15, 10, 10, 5, 0, 0, 0, 0, 0, 5, 10, 10, 10, 10, 10, 10, 5, 0, 0, 0, -5, 0, 0, 0, 5,
+      5, 5, 5, 5, 5, 0, 0, 0, -5, -10, 0, 0, 0, 5, 5, 5, 5, 5, 5, 0, 0, 0, -10, -10, -5, 0, 0, 0, 0,
+      0, 0, 0, 0, 0, 0, -5, -10, -20, -15, -10, -10, -10, -5, -5, -5, -5, -10, -10, -10, -15, -20,};
   public static final int GRIDSIZE = 48;
   public static final int GRIDNUM = 14;
   public static double MAX_MOVEMENT_TIME;
@@ -266,13 +274,23 @@ public class Board extends GameObject {
     double dstyToOpponent = Math.abs(ourKing.getDesY() - theirKing.getDesY()) / GRIDSIZE;
     eval += dstxToCenter + dstyToCenter;
     eval += (26 - dstxToOpponent - dstyToOpponent) / 26;
-    return eval * (28 - pieceList.size()) / 300;
+    return eval * (56 - pieceList.size()) / 600;
   }
 
   public double evaluateBoard() {
     double res = 0;
     for (Piece p : pieceList) {
       res += p.getValue();
+      if (!p.getCode().contains("k")) {
+        double pawnWeight = (p.getCode().contains("p") ? 3 : 1);
+        res +=
+            (pieceSquareTables[(int) p.getDesX() / GRIDSIZE + 14 * (int) (p.getDesY() / GRIDSIZE)]
+                * (p.isWhitePiece() ? 1 : -1) * pieceList.size() * pawnWeight) / 600;
+      } else {
+        if (p.isMoved()) {
+          res += 0.5 * (p.isWhitePiece() ? 1 : -1);
+        }
+      }
     }
     if (checkCheckMate()) {
       if (!checkCheck()) {
