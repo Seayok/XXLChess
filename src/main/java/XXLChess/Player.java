@@ -1,6 +1,7 @@
 package XXLChess;
 
 import java.util.List;
+import java.util.Random;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import processing.data.JSONObject;
@@ -13,7 +14,7 @@ public class Player {
   private Move moveToPlay;
   private boolean calculating;
   private boolean isLose;
-  private int depth = 2;
+  private int depth;
   private Clock clock;
 
   public void setupSide(boolean isWhite, boolean isBot) {
@@ -46,6 +47,10 @@ public class Player {
 
   public Clock getClock() {
     return clock;
+  }
+
+  public void setDepth(int depth) {
+    this.depth = depth;
   }
 
   public boolean isCalculating() {
@@ -82,6 +87,7 @@ public class Player {
 
   class CalculateMove implements Runnable {
     public void run() {
+      Random generator = new Random();
       List<Move> moveList = curBoard.getAllMoves(isWhite, true);
       Move resMove = null;
       double miniMax = isWhite ? -Double.POSITIVE_INFINITY : Double.POSITIVE_INFINITY;
@@ -89,14 +95,14 @@ public class Player {
       double beta = Double.POSITIVE_INFINITY;
       for (Move move : moveList) {
         double moveScore = curBoard.evaluateMove(move, depth, alpha, beta, !isWhite);
-        if (isWhite) {
-          alpha = Math.max(alpha, moveScore);
-        } else {
-          beta = Math.min(beta, moveScore);
-        }
         if ((isWhite && moveScore > miniMax) || (!isWhite && moveScore < miniMax)) {
           resMove = move;
           miniMax = moveScore;
+        }
+        if (moveScore == miniMax) {
+          if (resMove == null || generator.nextInt(2) == 1) {
+            resMove = move;
+          }
         }
 
       }

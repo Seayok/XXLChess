@@ -287,7 +287,7 @@ public class Board extends GameObject {
     double dstxToCenter =
         Math.max((theirKing.getDesX() / GRIDSIZE) - 6, 7 - (theirKing.getDesX() / GRIDSIZE));
     double dstyToCenter =
-        Math.max((theirKing.getDesY() / GRIDSIZE) - 6, 7 - (theirKing.getDesX() / GRIDSIZE));
+        Math.max((theirKing.getDesY() / GRIDSIZE) - 6, 7 - (theirKing.getDesY() / GRIDSIZE));
     double dstxToOpponent = Math.abs(ourKing.getDesX() - theirKing.getDesX()) / GRIDSIZE;
     double dstyToOpponent = Math.abs(ourKing.getDesY() - theirKing.getDesY()) / GRIDSIZE;
     eval += dstxToCenter + dstyToCenter;
@@ -301,10 +301,11 @@ public class Board extends GameObject {
       res += p.getValue();
       if (pieceList.size() > 10) {
         if (!p.getCode().contains("k")) {
-          double pawnWeight = (p.getCode().contains("p") ? 3 : 1);
-          res +=
+          double pawnWeight = (p.getCode().contains("p") ? 4 : 1);
+          double offset =
               (pieceSquareTables[(int) p.getDesX() / GRIDSIZE + 14 * (int) (p.getDesY() / GRIDSIZE)]
-                  * (p.isWhitePiece() ? 1 : -1) * pieceList.size() * pawnWeight) / 600;
+                  * (p.isWhitePiece() ? 1 : -1) * pieceList.size() * pawnWeight) / 1000;
+          res += offset;
         } else {
           if (p.isMoved()) {
             res += 0.5 * (p.isWhitePiece() ? 1 : -1);
