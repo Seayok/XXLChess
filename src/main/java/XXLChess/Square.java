@@ -12,6 +12,7 @@ public class Square extends GameObject {
   public static final int[] LIGHT_GREEN = {171, 162, 59};
   public static final int[] LIGHT_BlUE = {196, 224, 232};
   public static final int[] DARK_RED = {215, 0, 0};
+  public static final int[] PURPLE = {159, 43, 104};
   public static final int[] LIGHT_RED = {255, 164, 102};
   public static final int flashDuration = 30; // in frames
 
@@ -20,6 +21,7 @@ public class Square extends GameObject {
   private int curCoolDown;
   private Piece curPiece;
   private boolean prevMove;
+  private boolean special;
   private boolean onPieceWay;
   private boolean kingChecked;
   private boolean onCaptureway;
@@ -51,6 +53,10 @@ public class Square extends GameObject {
     underControl[isWhite ? 1 : 0] = true;
   }
 
+  public void setSpecial(boolean special) {
+    this.special = special;
+  }
+
   public void noControl() {
     underControl[0] = false;
     underControl[1] = false;
@@ -61,6 +67,8 @@ public class Square extends GameObject {
       color = DARK_GREEN;
     } else if (kingChecked) {
       color = DARK_RED;
+    } else if (special) {
+      color = PURPLE;
     } else if (onPieceWay) {
       color = LIGHT_BlUE;
     } else if (onCaptureway) {

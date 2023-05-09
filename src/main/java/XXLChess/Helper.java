@@ -15,11 +15,11 @@ public class Helper {
   public void initTimeAndSide(Player player1, Player player2) {
     JSONObject timeConfig = config.getJSONObject("time_controls");
     boolean playerIsWhite = (config.getString("player_colour").equals("white"));
-    player1.setupSide(playerIsWhite, true);
+    player1.setupSide(playerIsWhite, false);
     player2.setupSide(!playerIsWhite, true);
     JSONObject player1Time = timeConfig.getJSONObject("player");
     JSONObject player2Time = timeConfig.getJSONObject("cpu");
-    player1.setDepth(0);
+    // player1.setDepth(6);
     player2.setDepth(2);
     player1.setUpClock(player1Time);
     player2.setUpClock(player2Time);

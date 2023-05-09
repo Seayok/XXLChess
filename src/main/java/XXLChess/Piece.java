@@ -129,6 +129,10 @@ public abstract class Piece extends GameObject {
   public void displayMoveSet() {
     for (Move m : validMoves) {
       Square s = m.getEndSquare();
+      if (m.getFlag() == Move.CASTLE || m.isPromotion()
+          || (code.contains("p") && Math.abs(s.getY() - destY) > GRIDSIZE)) {
+        s.setSpecial(true);
+      }
       if (m.getFlag() == Move.CAPTURE) {
         s.setOnCapture(true);
       } else {

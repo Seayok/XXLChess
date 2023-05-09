@@ -240,6 +240,7 @@ public class Board extends GameObject {
         Square square = squareMat[i][j];
         square.setOnPieceWay(false);
         square.setOnCapture(false);
+        square.setSpecial(false);
         if (target != null) {
           square.setPrevMove(false);
           square.unWarning();
