@@ -24,7 +24,8 @@ public class Board extends GameObject {
 
   private boolean whiteTurn = true;
   private Piece[] king;
-  private CopyOnWriteArrayList<Piece>[] attackers;
+  private CopyOnWriteArrayList<Piece> whiteAttackers;
+  private CopyOnWriteArrayList<Piece> blackAttackers;
   private Piece selPiece;
   private HashMap<Character, CreatePiece> createOperations;
   private CopyOnWriteArrayList<Piece> pieceList;
@@ -41,9 +42,8 @@ public class Board extends GameObject {
     super(0, 0);
     squareMat = new Square[GRIDNUM][GRIDNUM];
     king = new Piece[2];
-    attackers = new CopyOnWriteArrayList[2];
-    attackers[0] = new CopyOnWriteArrayList<>();
-    attackers[1] = new CopyOnWriteArrayList<>();
+    whiteAttackers = new CopyOnWriteArrayList<>();
+    blackAttackers = new CopyOnWriteArrayList<>();
     pieceList = new CopyOnWriteArrayList<>();
     createOperations = new HashMap<>();
     createOperations.put('p', (x, y, code, square) -> new Pawn(x, y, code, square));
@@ -127,7 +127,7 @@ public class Board extends GameObject {
         king[whiteTurn ? 1 : 0].getSquare().setWarning();
         return 3;
       }
-      resetSquares(null);
+      resetSquares(selPiece.getSquare(), null);
       if (target.getPiece() != null) {
         return startClick(x, y);
       }
@@ -174,7 +174,7 @@ public class Board extends GameObject {
       if (move.isPromotion()) {
         movePiece.setPromotedSprite();
       }
-      resetSquares(move);
+      resetSquares(move.getStartSquare(), move.getEndSquare());
     }
     movePiece.setMoved(true);
     if (!submove) {
@@ -225,7 +225,7 @@ public class Board extends GameObject {
    * @return true if the current king is being check or false otherwise.
    */
   public boolean checkCheck() {
-    boolean check = attackers[whiteTurn ? 1 : 0].size() > 0;
+    boolean check = (whiteTurn ? whiteAttackers : blackAttackers).size() > 0;
     king[whiteTurn ? 1 : 0].getSquare().setKingChecked(check);
     return check;
   }
@@ -272,8 +272,6 @@ public class Board extends GameObject {
         s.setPiece(prevPiece);
         newMoveSet();
       }
-      System.out.print(s.getX() / 48 + " " + s.getY() / 48 + " ");
-      System.out.println(p.getCode());
       occupiedSquare.add(p.getSquare());
     }
     for (Square s : occupiedSquare) {
@@ -285,11 +283,10 @@ public class Board extends GameObject {
    * Function to reset the color of the square and all the atributes related to the current state of
    * the board.
    *
-   * @param move is the move made previously to set the color of previous move(green).
+   * @param prevSquare is the move selected previously.
+   * @param target is the square(if not null) that the piece will move to.
    */
-  public void resetSquares(Move move) {
-    Square target = move.getEndSquare();
-    Square prevSquare = move.getStartSquare();
+  public void resetSquares(Square prevSquare, Square target) {
     for (int i = 0; i < GRIDNUM; i++) {
       for (int j = 0; j < GRIDNUM; j++) {
         Square square = squareMat[i][j];
@@ -566,8 +563,8 @@ public class Board extends GameObject {
         squareMat[i][j].noControl();
       }
     }
-    attackers[0].removeAll(attackers[0]);
-    attackers[1].removeAll(attackers[1]);
+    blackAttackers.removeAll(blackAttackers);
+    whiteAttackers.removeAll(whiteAttackers);
     for (Piece p : pieceList) {
       p.setPinPiece(null);
     }
@@ -580,8 +577,8 @@ public class Board extends GameObject {
     }
   }
 
-  public CopyOnWriteArrayList<Piece>[] getAttackers() {
-    return attackers;
+  public CopyOnWriteArrayList<Piece> getAttackers(boolean isWhite) {
+    return isWhite ? whiteAttackers : blackAttackers;
   }
 
   public Piece getKing(boolean isWhite) {

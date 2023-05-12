@@ -139,7 +139,7 @@ public abstract class Piece extends GameObject implements LiveObject {
     int kingOccur = 0;
     int occur = 0;
     Piece prevPiece = this;
-    CopyOnWriteArrayList<Piece>[] attackers = curBoard.getAttackers();
+    CopyOnWriteArrayList<Piece> attackers = curBoard.getAttackers(!isWhite);
     Square[][] squares = curBoard.getSquareMat();
     for (int i = 1; i <= range; i++) {
       int changeX = i * dirX;
@@ -163,7 +163,7 @@ public abstract class Piece extends GameObject implements LiveObject {
             if (!(this.code.contains("p") && dirX == 0)) {
               if (destPiece.getCode().contains("k")) {
                 if (occur == 0) {
-                  attackers[this.isWhite ? 0 : 1].add(this);
+                  attackers.add(this);
                 } else {
                   prevPiece.setPinPiece(this);
                 }
@@ -191,7 +191,7 @@ public abstract class Piece extends GameObject implements LiveObject {
   }
 
   protected void setHorseMove(Board curBoard, int range) {
-    CopyOnWriteArrayList<Piece>[] attackers = curBoard.getAttackers();
+    CopyOnWriteArrayList<Piece> attackers = curBoard.getAttackers(!isWhite);
     Square[][] squares = curBoard.getSquareMat();
     List<Integer> changeX = Arrays.asList(1, range);
     List<Integer> changeY = Arrays.asList(range, 1);
@@ -206,7 +206,7 @@ public abstract class Piece extends GameObject implements LiveObject {
             preLegalMoves.add(new Move(curSquare, s, Move.NORMAL, this, null));
           } else if (destPiece.isWhitePiece() != this.isWhite) {
             if (destPiece.getCode().contains("k")) {
-              attackers[isWhite ? 0 : 1].add(this);
+              attackers.add(this);
             }
             preLegalMoves.add(new Move(curSquare, s, Move.CAPTURE, this, s.getPiece()));
           }
@@ -263,7 +263,7 @@ public abstract class Piece extends GameObject implements LiveObject {
    * @param curBoard the board which all pieces are on.
    */
   public void updateLegalMove(Board curBoard) {
-    CopyOnWriteArrayList<Piece> attackers = curBoard.getAttackers()[isWhite ? 1 : 0];
+    CopyOnWriteArrayList<Piece> attackers = curBoard.getAttackers(isWhite);
     Square kingSquare = curBoard.getKing(isWhite).getSquare();
     // Move king out of danger
     if (this.code.contains("k")) {
