@@ -2,7 +2,10 @@ package XXLChess;
 
 import processing.core.PApplet;
 
-public class Clock extends GameObject {
+/**
+ * This class represents a clock for each player.
+ */
+public class Clock extends GameObject implements LiveObject {
   private Timer timer;
   private boolean counting = false;
   private int countdown;
@@ -23,6 +26,12 @@ public class Clock extends GameObject {
     counting = true;
   }
 
+  /**
+   * Stop the clock.
+   *
+   * @param temporary is the flag indicate whether the clock will be stopped temporarily or
+   *        permanently.
+   */
   public void stop(boolean temporary) {
     if (temporary) {
       countdown += increment;
@@ -30,6 +39,7 @@ public class Clock extends GameObject {
     counting = false;
   }
 
+  @Override
   public void tick(PApplet applet) {
     App app = (App) applet;
     if (counting) {

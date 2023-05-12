@@ -1,13 +1,15 @@
 package XXLChess;
 
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 import processing.core.PApplet;
 import processing.core.PImage;
 
-
-public abstract class Piece extends GameObject {
+/**
+ * Abtract class representing a piece.
+ */
+public abstract class Piece extends GameObject implements LiveObject {
   public static final int GRIDNUM = Board.GRIDNUM;
   public static final int GRIDSIZE = Board.GRIDSIZE;
   public static PImage BLACK_QUEEN_IMAGE;
@@ -41,6 +43,15 @@ public abstract class Piece extends GameObject {
   protected CopyOnWriteArrayList<Move> preLegalMoves = new CopyOnWriteArrayList<Move>();
   protected boolean isWhite;
 
+
+  /**
+   * Constructs a new piece.
+   *
+   * @param x the x coordinate of the piece.
+   * @param y the y coordinate of the piece.
+   * @param code the unique identifier for each piece.
+   * @param curSquare the square which the piece belongs to initially.
+   */
   public Piece(float x, float y, String code, Square curSquare) {
     super(x, y);
     this.curSquare = curSquare;
@@ -59,6 +70,13 @@ public abstract class Piece extends GameObject {
     isMoved = false;
   }
 
+  /**
+   * Setup the movement stats.
+   *
+   * @param movementSpeed the default movement speed.
+   * @param movementTime the maximum movement time.
+   * @param pawnDirection the direction of pawn for each side.
+   */
   public static void setMoveStat(double movementSpeed, int movementTime, int pawnDirection) {
     Piece.pawnDirection = pawnDirection;
     Piece.movementSpeed = movementSpeed;
@@ -68,7 +86,7 @@ public abstract class Piece extends GameObject {
   /**
    * Sets the object's sprite.
    *
-   * @param sprite The new sprite to use.
+   * @param app is the main application.
    */
   public void setSprite(PApplet app) {
     String dir = "src/main/resources/XXLChess/" + code + ".png";
@@ -81,15 +99,9 @@ public abstract class Piece extends GameObject {
     }
   }
 
-  public void setPromotedSprite() {
-    this.sprite = isWhite ? WHITE_QUEEN_IMAGE : BLACK_QUEEN_IMAGE;
-    this.sprite.resize(GRIDSIZE, GRIDSIZE);
-  }
-
-  public Square getSquare() {
-    return curSquare;
-  }
-
+  /**
+   * Set the destination for the piece to move to.
+   */
   public void startMoving() {
     displayX = destX;
     displayY = destY;
@@ -102,30 +114,11 @@ public abstract class Piece extends GameObject {
 
   }
 
-  public void setPinPiece(Piece pin) {
-    pinPiece = pin;
-  }
 
-  public List<Move> getValidMoves() {
-    return validMoves;
-  }
-
-  public List<Move> getPreLegalMoves() {
-    return preLegalMoves;
-  }
-
-  public String getCode() {
-    return code;
-  }
-
-  public void setMoved(boolean moved) {
-    this.isMoved = moved;
-  }
-
-  public boolean isMoved() {
-    return isMoved;
-  }
-
+  /**
+   * When clicking on the piece, the valid moveset will be displayed on the board with suitable
+   * color.
+   */
   public void displayMoveSet() {
     for (Move m : validMoves) {
       Square s = m.getEndSquare();
@@ -197,71 +190,6 @@ public abstract class Piece extends GameObject {
     }
   }
 
-  public abstract void generateMove(Board curBoard);
-
-  public void updatePreLegalMoves(Board curBoard) {
-    preLegalMoves.removeAll(preLegalMoves);
-    validMoves.removeAll(validMoves);
-    generateMove(curBoard);
-  }
-
-  public double getValue() {
-    return value;
-  }
-
-  public void updateLegalMove(Board curBoard) {
-    CopyOnWriteArrayList<Piece> attackers = curBoard.getAttackers()[isWhite ? 1 : 0];
-    Square kingSquare = curBoard.getKing(isWhite).getSquare();
-    // Move king out of danger
-    if (this.code.contains("k")) {
-      for (Move move : preLegalMoves) {
-        if (!move.getEndSquare().isControl(!isWhite)) {
-          validMoves.add(move);
-        }
-        if (move.getFlag() == Move.CASTLE
-            && (move.getSubMove().getSourcePiece().getPinPiece() != null || attackers.size() > 0)) {
-          validMoves.remove(move);
-        }
-      }
-      return;
-    }
-    if (attackers.size() > 1) {
-      return;
-    } else if (attackers.size() == 1) {
-      Piece attacker = attackers.get(0);
-      Square attackerSquare = attacker.getSquare();
-      // Capture the attacking piece
-      if (attackerSquare.isControl(isWhite)) {
-        Move move = getMoveFromSquare(attackerSquare, false);
-        if (move != null) {
-          validMoves.add(move);
-        }
-      }
-
-      // Block the attack
-      if (!attacker.code.contains("p|n|c|g|k")) {
-        for (Move move : preLegalMoves) {
-          if (Board.checkOnWay(kingSquare, attackerSquare, move.getEndSquare())) {
-            validMoves.add(move);
-          }
-        }
-      }
-    } else {
-      validMoves.addAll(preLegalMoves);
-    }
-
-    if (pinPiece != null) {
-      validMoves.removeIf(
-          move -> !Board.checkOnWay(kingSquare, pinPiece.getSquare(), move.getEndSquare()));
-    }
-
-  }
-
-  public Piece getPinPiece() {
-    return pinPiece;
-  }
-
-
   protected void setHorseMove(Board curBoard, int range) {
     CopyOnWriteArrayList<Piece>[] attackers = curBoard.getAttackers();
     Square[][] squares = curBoard.getSquareMat();
@@ -315,7 +243,75 @@ public abstract class Piece extends GameObject {
     }
   }
 
-  public void tick() {
+  public abstract void generateMove(Board curBoard);
+
+  /**
+   * Get the prelegal move of a piece.
+   *
+   * @param curBoard the board which all pieces are on.
+   */
+  public void updatePreLegalMoves(Board curBoard) {
+    preLegalMoves.removeAll(preLegalMoves);
+    validMoves.removeAll(validMoves);
+    generateMove(curBoard);
+  }
+
+
+  /**
+   * From the prelegal moves, filter out the illegal moves.
+   *
+   * @param curBoard the board which all pieces are on.
+   */
+  public void updateLegalMove(Board curBoard) {
+    CopyOnWriteArrayList<Piece> attackers = curBoard.getAttackers()[isWhite ? 1 : 0];
+    Square kingSquare = curBoard.getKing(isWhite).getSquare();
+    // Move king out of danger
+    if (this.code.contains("k")) {
+      for (Move move : preLegalMoves) {
+        if (!move.getEndSquare().isControl(!isWhite)) {
+          validMoves.add(move);
+        }
+        if (move.getFlag() == Move.CASTLE
+            && (move.getSubMove().getSourcePiece().getPinPiece() != null || attackers.size() > 0)) {
+          validMoves.remove(move);
+        }
+      }
+      return;
+    }
+    if (attackers.size() > 1) {
+      return;
+    } else if (attackers.size() == 1) {
+      Piece attacker = attackers.get(0);
+      Square attackerSquare = attacker.getSquare();
+      // Capture the attacking piece
+      if (attackerSquare.isControl(isWhite)) {
+        Move move = getMoveFromSquare(attackerSquare, false);
+        if (move != null) {
+          validMoves.add(move);
+        }
+      }
+
+      // Block the attack
+      if (!attacker.code.contains("p|n|c|g|k")) {
+        for (Move move : preLegalMoves) {
+          if (Board.checkOnWay(kingSquare, attackerSquare, move.getEndSquare())) {
+            validMoves.add(move);
+          }
+        }
+      }
+    } else {
+      validMoves.addAll(preLegalMoves);
+    }
+
+    if (pinPiece != null) {
+      validMoves.removeIf(
+          move -> !Board.checkOnWay(kingSquare, pinPiece.getSquare(), move.getEndSquare()));
+    }
+
+  }
+
+  @Override
+  public void tick(PApplet app) {
     double movementSpeed = Piece.movementSpeed;
     if (overrideSpeed > 0) {
       movementSpeed = overrideSpeed;
@@ -332,26 +328,30 @@ public abstract class Piece extends GameObject {
       overrideSpeed = 0;
       moving = false;
     }
+    app.image(this.sprite, cordX, cordY);
   }
 
-  public boolean isWhitePiece() {
-    return isWhite;
-  }
 
+  /**
+   * Set the destination square of that the piece is going to move to.
+   *
+   * @param target the destination square.
+   */
   public void setDestination(Square target) {
     this.curSquare = target;
     this.destX = target.getX();
     this.destY = target.getY();
   }
 
-  public float getDesX() {
-    return destX;
-  }
 
-  public float getDesY() {
-    return destY;
-  }
-
+  /**
+   * Get the move that have the particular destination square.
+   *
+   * @param s the destination square.
+   * @param legal the flag indicating whether the list of move the function taking from is legal or
+   *        prelegal.
+   * @return the move that have the particular destination square, or null if no such move.
+   */
   public Move getMoveFromSquare(Square s, boolean legal) {
     CopyOnWriteArrayList<Move> searchList = legal ? validMoves : preLegalMoves;
     for (Move m : searchList) {
@@ -362,6 +362,58 @@ public abstract class Piece extends GameObject {
     return null;
   }
 
+  public void setPinPiece(Piece pin) {
+    pinPiece = pin;
+  }
+
+  public List<Move> getValidMoves() {
+    return validMoves;
+  }
+
+  public List<Move> getPreLegalMoves() {
+    return preLegalMoves;
+  }
+
+  public String getCode() {
+    return code;
+  }
+
+  public void setMoved(boolean moved) {
+    this.isMoved = moved;
+  }
+
+  public boolean isMoved() {
+    return isMoved;
+  }
+
+  public boolean isWhitePiece() {
+    return isWhite;
+  }
+
+  public Piece getPinPiece() {
+    return pinPiece;
+  }
+
+  public float getDesX() {
+    return destX;
+  }
+
+  public float getDesY() {
+    return destY;
+  }
+
+  public void setPromotedSprite() {
+    this.sprite = isWhite ? WHITE_QUEEN_IMAGE : BLACK_QUEEN_IMAGE;
+    this.sprite.resize(GRIDSIZE, GRIDSIZE);
+  }
+
+  public Square getSquare() {
+    return curSquare;
+  }
+
+  public double getValue() {
+    return value;
+  }
 
   /**
    * Draws the object to the screen.
@@ -369,7 +421,6 @@ public abstract class Piece extends GameObject {
    * @param app The window to draw onto.
    */
   public void draw(PApplet app) {
-    tick();
-    app.image(this.sprite, cordX, cordY);
+    tick(app);
   }
 }

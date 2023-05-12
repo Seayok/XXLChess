@@ -2,11 +2,12 @@ package XXLChess;
 
 import processing.core.PApplet;
 
-public class Game {
+/**
+ * Class representing the game.
+ */
+public class Game implements LiveObject {
   private Board board;
   private App app;
-  private Clock clockBlack;
-  private Clock clockWhite;
   private Player player1;
   private boolean gameOver;
   private Player player2;
@@ -16,18 +17,30 @@ public class Game {
   private int prevVal;
   private Message textBox;
 
-  public Game(Board board, App app, Player player1, Player player2, Clock clockBlack,
-      Clock clockWhite, Message textBox) {
+  /**
+   * Constructor for creating new game.
+   *
+   * @param board is a board we run our game on.
+   * @param app is the application we run our game on.
+   * @param player1 is the first player.
+   * @param player2 is the second player.
+   * @param textBox is the message box that displays messages.
+   */
+  public Game(Board board, App app, Player player1, Player player2, Message textBox) {
     this.app = app;
     this.board = board;
     this.player1 = player1;
     this.player2 = player2;
-    this.clockBlack = clockBlack;
-    this.clockWhite = clockWhite;
     this.textBox = textBox;
     this.curPlayer = player1.isWhite() ? player1 : player2;
   }
 
+  /**
+   * Display appropriate message and timer based on the state of the game.
+   *
+   * @param status is the status from the board. 0 is normal, 1 is being checked, 2 is playing legal
+   *        move while in check, 3 is checkmate, 4 is timer over, 5 is resign, 6 is draw.
+   */
   public void updateGameStatus(int status) {
     switch (status) {
       case 0:
@@ -41,36 +54,42 @@ public class Game {
         break;
       case 3:
         textBox.checkMate(curPlayer);
-        clockBlack.stop(false);
-        clockWhite.stop(false);
         break;
       case 4:
         gameOver = true;
         textBox.timeOver(curPlayer);
-        clockBlack.stop(false);
-        clockWhite.stop(false);
         break;
       case 5:
         textBox.resign();
-        clockBlack.stop(false);
-        clockWhite.stop(false);
         break;
       case 6:
         textBox.drawMessage();
-        clockBlack.stop(false);
-        clockWhite.stop(false);
         break;
       default:
         textBox.hide();
     }
+
+    if (status >= 3) {
+      player1.getClock().stop(false);
+      player2.getClock().stop(false);
+    }
   }
 
+  /**
+   * Updates the game state after player resign.
+   */
   public void resign() {
     curPlayer.lose();
     gameOver = true;
     updateGameStatus(5);
   }
 
+  /**
+   * Update the game state base on the move information from the previous move.
+   *
+   * @param moveState is the status of the previous legal move, 2 is success, 3 is failure since the
+   *        previous legal move did not protect the kings
+   */
   public void processMoveState(int moveState) {
     if (moveState == 2) {
       gameState = 0;
@@ -94,6 +113,12 @@ public class Game {
     updateGameStatus(gameState);
   }
 
+  /**
+   * Process the mouse click event from user.
+   *
+   * @param x is the x coordinate of the click.
+   * @param y is the y coordinate of the click.
+   */
   public void mouseClicked(int x, int y) {
     // if (!gameOver && x < board.getSize() && y < board.getSize()) {
     if (!gameOver && x < board.getSize() && y < board.getSize() && !curPlayer.isBot()) {
@@ -106,6 +131,9 @@ public class Game {
     }
   }
 
+  /**
+   * Switch turn of the player.
+   */
   public void switchTurn() {
     curPlayer.getClock().stop(true);
     curPlayer = (curPlayer == player1) ? player2 : player1;
@@ -113,7 +141,8 @@ public class Game {
     prevVal = curPlayer.getClock().getCountDown();
   }
 
-  public void draw(PApplet app) {
+  @Override
+  public void tick(PApplet app) {
     if (curPlayer.isBot() && !gameOver) {
       processMoveState(curPlayer.guessMove(board, prevVal));
     }
@@ -121,7 +150,7 @@ public class Game {
     if (!curPlayer.isCalculating()) {
       board.draw(app);
     }
-    clockBlack.draw(app);
-    clockWhite.draw(app);
+    player1.getClock().draw(app);
+    player2.getClock().draw(app);
   }
 }

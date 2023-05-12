@@ -1,5 +1,8 @@
 package XXLChess;
 
+/**
+ * class of the Amazon.
+ */
 public class Amazon extends Piece {
 
   public Amazon(float x, float y, String code, Square curSquare) {

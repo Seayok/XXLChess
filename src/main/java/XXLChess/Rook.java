@@ -1,5 +1,8 @@
 package XXLChess;
 
+/**
+ * Class representing the Rook.
+ */
 public class Rook extends Piece {
   public Rook(float x, float y, String code, Square curSquare) {
     super(x, y, code, curSquare);

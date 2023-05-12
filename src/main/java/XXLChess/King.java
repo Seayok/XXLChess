@@ -1,5 +1,8 @@
 package XXLChess;
 
+/**
+ * class of the King.
+ */
 public class King extends Piece {
   public King(float x, float y, String code, Square curSquare) {
     super(x, y, code, curSquare);

@@ -1,5 +1,8 @@
 package XXLChess;
 
+/**
+ * Class representing a move.
+ */
 public class Move {
   public static final int NORMAL = 0;
   public static final int CAPTURE = 1;
@@ -17,6 +20,15 @@ public class Move {
   private Piece destPiece;
   private Move subMove;
 
+  /**
+   * Contruct a new move.
+   *
+   * @param startSquare is the start square.
+   * @param endSquare is the end square.
+   * @param flag is the flag of the move: 0 is normal, 1 is capture, 2 is castle, 3 is threat.
+   * @param sourcePiece is the moving piece.
+   * @param destPiece is the piece of the destination.
+   */
   public Move(Square startSquare, Square endSquare, int flag, Piece sourcePiece, Piece destPiece) {
     this.startSquare = startSquare;
     this.endSquare = endSquare;

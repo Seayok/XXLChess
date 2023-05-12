@@ -1,5 +1,8 @@
 package XXLChess;
 
+/**
+ * class of the Camel.
+ */
 public class Camel extends Piece {
   public Camel(float x, float y, String code, Square curSquare) {
     super(x, y, code, curSquare);

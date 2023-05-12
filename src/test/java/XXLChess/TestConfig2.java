@@ -39,7 +39,7 @@ public class TestConfig2 {
     clockWhite.start(app);
     clockBlack.stop(false);
     board = new Board(helper.loadBoard(), app);
-    game = new Game(board, app, player1, player2, clockBlack, clockWhite, textBox);
+    game = new Game(board, app, player1, player2, textBox);
 
   }
 

@@ -1,5 +1,8 @@
 package XXLChess;
 
+/**
+ * class of the Bishop.
+ */
 public class Bishop extends Piece {
 
   public Bishop(float x, float y, String code, Square curSquare) {

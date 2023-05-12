@@ -1,16 +1,10 @@
 package XXLChess;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import processing.core.PApplet;
-
-interface CreatePiece {
-  Piece makeNewPiece(int x, int y, String code, Square square);
-}
-
 
 /**
  * Represents a board.
@@ -27,17 +21,21 @@ public class Board extends GameObject {
   public static final int GRIDSIZE = 48;
   public static final int GRIDNUM = 14;
   public static double MAX_MOVEMENT_TIME;
+
   private boolean whiteTurn = true;
   private Piece[] king;
   private CopyOnWriteArrayList<Piece>[] attackers;
   private Piece selPiece;
-  private Square selSquare;
   private HashMap<Character, CreatePiece> createOperations;
   private CopyOnWriteArrayList<Piece> pieceList;
   private Square[][] squareMat;
 
   /**
-   * Creates a new board with coordinates (0, 0).
+   * Constructor for creating a new board.
+   *
+   * @param levelArr is a matrix containing the code of piece in a matrix extracted from the config
+   *        file.
+   * @param app is the applicaiton we are running on.
    */
   public Board(String[][] levelArr, PApplet app) {
     super(0, 0);
@@ -78,6 +76,11 @@ public class Board extends GameObject {
     newMoveSet();
   }
 
+  /**
+   * Set image for all pieces and draw them.
+   *
+   * @param app is our main application.
+   */
   public void setSpriteAndDisplay(PApplet app) {
     for (Piece piece : pieceList) {
       piece.setSprite(app);
@@ -85,15 +88,18 @@ public class Board extends GameObject {
     draw(app);
   }
 
-  public List<Piece> getPieceList() {
-    return pieceList;
-  }
-
+  /**
+   * Process information of the clicks when there is no selected pieces.
+   *
+   * @param x is the x coordinate of the click.
+   * @param y is the y coordinate of the click.
+   * @return 1 when successully selected a piece, 0 otherwise.
+   */
   public int startClick(int x, int y) {
     if (squareMat[x / GRIDSIZE][y / GRIDSIZE].getPiece() == null) {
       return 0;
     }
-    selSquare = squareMat[x / GRIDSIZE][y / GRIDSIZE];
+    Square selSquare = squareMat[x / GRIDSIZE][y / GRIDSIZE];
     selPiece = selSquare.getPiece();
     if (selPiece.isWhitePiece() != whiteTurn) {
       selSquare = null;
@@ -105,6 +111,14 @@ public class Board extends GameObject {
     return 1;
   }
 
+  /**
+   * Process information of the clicks when there is a selected pieces.
+   *
+   * @param x is the x coordinate of the click.
+   * @param y is the y coordinate of the click.
+   * @return 0 when reseting the selected piece, 2 if succesfully move a piece, 3 if make a legal
+   *         move that not protect the king when it is in check
+   */
   public int selectClick(int x, int y) {
     Square target = squareMat[x / GRIDSIZE][y / GRIDSIZE];
     if (!target.isOnPieceWay() && !target.isOnCaptured()) {
@@ -113,7 +127,7 @@ public class Board extends GameObject {
         king[whiteTurn ? 1 : 0].getSquare().setWarning();
         return 3;
       }
-      resetSquares(selSquare, null, null);
+      resetSquares(null);
       if (target.getPiece() != null) {
         return startClick(x, y);
       }
@@ -124,6 +138,14 @@ public class Board extends GameObject {
     }
   }
 
+  /**
+   * Make a move.
+   *
+   * @param move is the move to execute.
+   * @param display is the flag indicating whether the change to the board will display or not(not
+   *        display is for AI computing moves).
+   * @param submove indicates whether the move has the submove to be executed first.
+   */
   public void makeMove(Move move, boolean display, boolean submove) {
 
     Piece movePiece = move.getSourcePiece();
@@ -152,7 +174,7 @@ public class Board extends GameObject {
       if (move.isPromotion()) {
         movePiece.setPromotedSprite();
       }
-      resetSquares(start, movePiece, target);
+      resetSquares(move);
     }
     movePiece.setMoved(true);
     if (!submove) {
@@ -161,6 +183,14 @@ public class Board extends GameObject {
     }
   }
 
+  /**
+   * Get the all legal moves from one side.
+   *
+   * @param isWhite indicates whether the move is from white side or black side.
+   * @param order indicates whether we have the move in order of the move score(for AI alpha beta
+   *        pruning purpose).
+   * @return a list of all legal moves satisfying the parameters.
+   */
   public List<Move> getAllMoves(boolean isWhite, boolean order) {
     List<Move> result = new ArrayList<>();
     for (Piece p : pieceList) {
@@ -184,12 +214,16 @@ public class Board extends GameObject {
         }
         move.setScore(moveScore);
       }
-      Collections.sort(result,
-          (a, b) -> (int) new Double(b.getScore()).compareTo(new Double(a.getScore())));
+      result.sort((a, b) -> Double.compare(b.getScore(), a.getScore()));
     }
     return result;
   }
 
+  /**
+   * Check if the current king of one side is being check.
+   *
+   * @return true if the current king is being check or false otherwise.
+   */
   public boolean checkCheck() {
     boolean check = attackers[whiteTurn ? 1 : 0].size() > 0;
     king[whiteTurn ? 1 : 0].getSquare().setKingChecked(check);
@@ -200,6 +234,15 @@ public class Board extends GameObject {
     return getAllMoves(whiteTurn, false).size() == 0;
   }
 
+  /**
+   * Check if one square is on the same line with other squares.
+   *
+   * @param start is the starting square.
+   * @param end is the ending square.
+   * @param check is the square being checked if it is on the same line with start square and end
+   *        square.
+   * @return true if 3 squares in on the same line, false otherwise.
+   */
   public static boolean checkOnWay(Square start, Square end, Square check) {
     double firstDistance = distanceBetweenTwoSquares(start, end);
     double secondDistance = distanceBetweenTwoSquares(start, check);
@@ -207,6 +250,10 @@ public class Board extends GameObject {
     return firstDistance == secondDistance + thirdDistance;
   }
 
+  /**
+   * After a checkmate, this function is called to display all the pieces contributed to the
+   * checkmate.
+   */
   public void displayCheckMatePiece() {
     List<Square> occupiedSquare = new ArrayList<>();
     Piece kingPiece = king[whiteTurn ? 1 : 0];
@@ -216,12 +263,12 @@ public class Board extends GameObject {
     kingSquare.setPiece(null);
     for (Move m : kingMoves) {
       Square s = m.getEndSquare();
-      Piece p = squareUnderAttack(whiteTurn, s);
+      Piece p = pieceAttackSquare(whiteTurn, s);
       if (p == null) {
-        Piece prevPiece = s.getPiece();
+        final Piece prevPiece = s.getPiece();
         s.setPiece(null);
         newMoveSet();
-        p = squareUnderAttack(whiteTurn, s);
+        p = pieceAttackSquare(whiteTurn, s);
         s.setPiece(prevPiece);
         newMoveSet();
       }
@@ -234,7 +281,15 @@ public class Board extends GameObject {
     }
   }
 
-  public void resetSquares(Square curSquare, Piece piece, Square target) {
+  /**
+   * Function to reset the color of the square and all the atributes related to the current state of
+   * the board.
+   *
+   * @param move is the move made previously to set the color of previous move(green).
+   */
+  public void resetSquares(Move move) {
+    Square target = move.getEndSquare();
+    Square prevSquare = move.getStartSquare();
     for (int i = 0; i < GRIDNUM; i++) {
       for (int j = 0; j < GRIDNUM; j++) {
         Square square = squareMat[i][j];
@@ -249,28 +304,21 @@ public class Board extends GameObject {
       }
     }
     if (target != null) {
-      curSquare.setPrevMove(true);
+      prevSquare.setPrevMove(true);
       target.setPrevMove(true);
     }
-    curSquare.deselect();
+    prevSquare.deselect();
     selPiece = null;
-    selSquare = null;
   }
 
-  public CopyOnWriteArrayList<Piece>[] getAttackers() {
-    return attackers;
-  }
-
-  public Piece getKing(boolean isWhite) {
-    return king[isWhite ? 1 : 0];
-  }
-
-  public static double distanceBetweenTwoSquares(Square square1, Square square2) {
-    return Math.sqrt(Math.pow(square1.getX() - square2.getX(), 2)
-        + Math.pow(square1.getY() - square2.getY(), 2));
-  }
-
-  public Piece squareUnderAttack(boolean isWhite, Square target) {
+  /**
+   * Get the piece which attacks a particular square.
+   *
+   * @param isWhite is the side of piece attacking.
+   * @param target is the square we wish to get the piece attacking this square.
+   * @return the piece which attacks this square, or null if otherwise.
+   */
+  public Piece pieceAttackSquare(boolean isWhite, Square target) {
     for (Piece p : pieceList) {
       if (p.isWhitePiece() != isWhite) {
         if (p.getMoveFromSquare(target, false) != null) {
@@ -281,6 +329,12 @@ public class Board extends GameObject {
     return null;
   }
 
+  /**
+   * Function to return values for the evaluate function that encourage AI to make the opponent king
+   * to edge for easier checkmate.
+   *
+   * @return values for the evaluate function.
+   */
   public double forceKingToEdge() {
     double eval = 0;
     Piece theirKing = king[whiteTurn ? 1 : 0];
@@ -296,6 +350,13 @@ public class Board extends GameObject {
     return eval * (56 - pieceList.size()) / 600;
   }
 
+  /**
+   * Evaluates the current state of the board by various factors: position of pieces, position of
+   * kings, pieces value.
+   *
+   * @return the evaluted score of the current state of the board, negative if black has an
+   *         advantage, positive if white has an advantage, 0 if black and white are equal.
+   */
   public double evaluateBoard() {
     double res = 0;
     for (Piece p : pieceList) {
@@ -325,6 +386,18 @@ public class Board extends GameObject {
     return res;
   }
 
+  /**
+   * Function called after evaluateMove to go to the end of the capture chain to get the best
+   * optimized values out of if. This function has no depth since we will go to the end of the
+   * capture chain.
+   *
+   * @param move is the move to make.
+   * @param alpha is the maximun values founded so far.
+   * @param beta is the minimun values founded so far.
+   * @param maximize is the flag indicating whether we are maximizing the values of move or
+   *        not(white need to maximize while black need to minimize).
+   * @return value of the move.
+   */
   public double evaluateCapture(Move move, double alpha, double beta, boolean maximize) {
     Piece movePiece = move.getSourcePiece();
     double res = maximize ? -Double.POSITIVE_INFINITY : Double.POSITIVE_INFINITY;
@@ -382,6 +455,19 @@ public class Board extends GameObject {
     return res;
   }
 
+  /**
+   * An evaluation function that evaluates a move by using minimax algorithm combining with alpha
+   * beta prunning.
+   *
+   * @param move is the move to make.
+   * @param depth is the number of moves afterwards we want to consider to evaluate the current
+   *        move.
+   * @param alpha is the maximun values founded so far.
+   * @param beta is the minimun values founded so far.
+   * @param maximize is the flag indicating whether we are maximizing the values of move or
+   *        not(white need to maximize while black need to minimize).
+   * @return value of the move.
+   */
   public double evaluateMove(Move move, int depth, double alpha, double beta, boolean maximize) {
     Piece movePiece = move.getSourcePiece();
     double res = maximize ? -Double.POSITIVE_INFINITY : Double.POSITIVE_INFINITY;
@@ -448,6 +534,13 @@ public class Board extends GameObject {
     return res;
   }
 
+  /**
+   * Reset the state before a move is executed.
+   *
+   * @param move is the move had been executed.
+   * @param isMoved is whether the moving piece is previously moved or not.
+   * @param submove is the flag indicating whether the move has the submove or not.
+   */
   public void unmove(Move move, boolean isMoved, boolean submove) {
     final Piece movePiece = move.getSourcePiece();
     final Square startSquare = move.getStartSquare();
@@ -464,6 +557,9 @@ public class Board extends GameObject {
     movePiece.setMoved(isMoved);
   }
 
+  /**
+   * Updates the moveset of all pieces and reset state of squares.
+   */
   public void newMoveSet() {
     for (int i = 0; i < GRIDNUM; i++) {
       for (int j = 0; j < GRIDNUM; j++) {
@@ -484,6 +580,19 @@ public class Board extends GameObject {
     }
   }
 
+  public CopyOnWriteArrayList<Piece>[] getAttackers() {
+    return attackers;
+  }
+
+  public Piece getKing(boolean isWhite) {
+    return king[isWhite ? 1 : 0];
+  }
+
+  public static double distanceBetweenTwoSquares(Square square1, Square square2) {
+    return Math.sqrt(Math.pow(square1.getX() - square2.getX(), 2)
+        + Math.pow(square1.getY() - square2.getY(), 2));
+  }
+
   public boolean isWhiteTurn() {
     return whiteTurn;
   }
@@ -496,6 +605,11 @@ public class Board extends GameObject {
     return GRIDSIZE * GRIDNUM;
   }
 
+  public List<Piece> getPieceList() {
+    return pieceList;
+  }
+
+  @Override
   public void draw(PApplet app) {
     for (int i = 0; i < GRIDNUM; i++) {
       for (int j = 0; j < GRIDNUM; j++) {

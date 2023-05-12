@@ -29,7 +29,11 @@ public class Square extends GameObject {
   private int[] color;
 
   /**
-   * Creates a new square with coordinates and colors
+   * Creates a new square with coordinates and colors.
+   *
+   * @param x the x position.
+   * @param y the y position.
+   * @param app the main application.
    */
   public Square(int x, int y, PApplet app) {
     super(x * SQUARESIZE, y * SQUARESIZE);
@@ -62,6 +66,9 @@ public class Square extends GameObject {
     underControl[1] = false;
   }
 
+  /**
+   * Change color according the flags of the square.
+   */
   public void setColor() {
     if (selected) {
       color = DARK_GREEN;
@@ -127,6 +134,10 @@ public class Square extends GameObject {
     return onCaptureway;
   }
 
+  /**
+   * Function to display flashing if the player made a legal move not protect the king while king is
+   * in check.
+   */
   public void tick() {
     if (numFlashes > 0) {
       if (curCoolDown == 0) {
@@ -142,6 +153,7 @@ public class Square extends GameObject {
     setColor();
   }
 
+  @Override
   public void draw(PApplet app) {
     // Draw square
     tick();

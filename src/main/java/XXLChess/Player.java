@@ -6,7 +6,9 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import processing.data.JSONObject;
 
-
+/**
+ * Class representing a player.
+ */
 public class Player {
   private boolean isWhite;
   private boolean isBot;
@@ -38,13 +40,6 @@ public class Player {
     return isWhite;
   }
 
-  public void setUpClock(JSONObject playertime) {
-    float clockY = isBot ? 56 : 634;
-    float clockX = 690;
-    clock = new Clock(clockX, clockY);
-    clock.setConfig(playertime.getInt("seconds"), playertime.getInt("increment"));
-  }
-
   public Clock getClock() {
     return clock;
   }
@@ -57,6 +52,27 @@ public class Player {
     return calculating;
   }
 
+  /**
+   * Set up clock for each player.
+   *
+   * @param playertime the settings information from the config file.
+   */
+  public void setUpClock(JSONObject playertime) {
+    float clockY = isBot ? 56 : 634;
+    float clockX = 690;
+    clock = new Clock(clockX, clockY);
+    clock.setConfig(playertime.getInt("seconds"), playertime.getInt("increment"));
+  }
+
+
+  /**
+   * Start calculating the move after 1 second of switching turns.
+   *
+   * @param curBoard the board on which players are playing.
+   * @param prevVal the preivious value of the clock.
+   * @return the move state: 0 is not finished calculating, 1 is finished calculating and made the
+   *         move.
+   */
   public int guessMove(Board curBoard, int prevVal) {
     if (clock.getCountDown() == prevVal) {
       return 0;
@@ -77,6 +93,9 @@ public class Player {
     }
   }
 
+  /**
+   * Start to calculate and get the best move within the depth.
+   */
   public void calculateMove() {
     Runnable job = new CalculateMove();
     ExecutorService executor = Executors.newSingleThreadExecutor();

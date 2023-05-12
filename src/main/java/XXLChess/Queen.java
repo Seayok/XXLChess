@@ -1,5 +1,8 @@
 package XXLChess;
 
+/**
+ * Class representing the Queen.
+ */
 public class Queen extends Piece {
   public Queen(float x, float y, String code, Square curSquare) {
     super(x, y, code, curSquare);

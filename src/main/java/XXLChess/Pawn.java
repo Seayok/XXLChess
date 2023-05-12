@@ -1,11 +1,15 @@
 package XXLChess;
 
+/**
+ * Class representing the Pawn.
+ */
 public class Pawn extends Piece {
   public Pawn(float x, float y, String code, Square curSquare) {
     super(x, y, code, curSquare);
     this.value = this.isWhite ? 1 : -1;
   }
 
+  @Override
   public void generateMove(Board curBoard) {
     int dir = isWhite ? -1 : 1;
     dir *= pawnDirection;

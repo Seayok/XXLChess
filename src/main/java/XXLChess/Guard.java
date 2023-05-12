@@ -1,5 +1,8 @@
 package XXLChess;
 
+/**
+ * class of the Guard.
+ */
 public class Guard extends Piece {
 
   public Guard(float x, float y, String code, Square curSquare) {

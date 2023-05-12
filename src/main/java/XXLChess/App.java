@@ -5,6 +5,9 @@ import processing.core.PApplet;
 import processing.data.JSONObject;
 import processing.event.MouseEvent;
 
+/**
+ * Main entry point for the application.
+ */
 public class App extends PApplet {
 
   public static final int SPRITESIZE = 480;
@@ -21,13 +24,14 @@ public class App extends PApplet {
 
   public Game game;
   public Board board;
-  public Clock clockWhite;
-  public Clock clockBlack;
   public Player player1;
   public Player player2;
   public Helper helper;
   public Message textBox;
 
+  /**
+   * App constructor.
+   */
   public App() {
     this.player1 = new Player();
     this.player2 = new Player();
@@ -50,21 +54,15 @@ public class App extends PApplet {
   public void setup() {
     frameRate(FPS);
 
-    // Load images during setup
-
-    // PImage spr = loadImage("src/main/resources/XXLChess/"+...);
-
     // load config
     JSONObject conf = loadJSONObject(new File(this.configPath));
     helper.setConfig(conf);
     helper.initTimeAndSide(player1, player2);
     helper.updateMoveStatus(conf, player1.isWhite());
-    clockWhite = player1.isWhite() ? player1.getClock() : player2.getClock();
-    clockBlack = player1.isWhite() ? player2.getClock() : player1.getClock();
+    Clock clockWhite = player1.isWhite() ? player1.getClock() : player2.getClock();
     clockWhite.start(this);
-    clockBlack.stop(false);
     board = new Board(helper.loadBoard(), this);
-    game = new Game(board, this, player1, player2, clockBlack, clockWhite, textBox);
+    game = new Game(board, this, player1, player2, textBox);
     board.setSpriteAndDisplay(this);
   }
 
@@ -104,7 +102,7 @@ public class App extends PApplet {
     fill(155);
     stroke(155);
     rect(672, 0, 150, 800);
-    game.draw(this);
+    game.tick(this);
   }
 
   // Add any additional methods or attributes you want. Please put classes in

@@ -2,10 +2,20 @@ package XXLChess;
 
 import processing.core.PApplet;
 
+/**
+ * Class representing a message box.
+ */
 public class Message extends GameObject {
   private float size;
   private String text;
 
+  /**
+   * Constructs a new message box.
+   *
+   * @param x is the x position of the message.
+   * @param y is the y position of the message.
+   * @param size is the size of the message.
+   */
   public Message(float x, float y, float size) {
     super(x, y);
     text = "";
@@ -25,6 +35,11 @@ public class Message extends GameObject {
     this.size = 13;
   }
 
+  /**
+   * Display timeover message for a certain player.
+   *
+   * @param curPlayer is the player whose clock is over.
+   */
   public void timeOver(Player curPlayer) {
     String status = curPlayer.isBot() ? "won" : "lost";
     this.text = "You " + status + "\non time!\n\n\nPress 'r' to restart\nthe game";
@@ -36,6 +51,11 @@ public class Message extends GameObject {
     this.size = 24;
   }
 
+  /**
+   * Display message after being checkmate.
+   *
+   * @param curPlayer is the player being checkmate.
+   */
   public void checkMate(Player curPlayer) {
     String status = curPlayer.isBot() ? "won" : "lost";
     this.text = "You " + status + " by\ncheckmate!\n\n\nPress 'r' to restart\nthe game";

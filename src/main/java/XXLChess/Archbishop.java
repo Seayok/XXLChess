@@ -1,5 +1,8 @@
 package XXLChess;
 
+/**
+ * class of the Archbishop.
+ */
 public class Archbishop extends Piece {
 
   public Archbishop(float x, float y, String code, Square curSquare) {

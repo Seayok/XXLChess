@@ -1,5 +1,8 @@
 package XXLChess;
 
+/**
+ * class of the Chancellor.
+ */
 public class Chancellor extends Piece {
   public Chancellor(float x, float y, String code, Square curSquare) {
     super(x, y, code, curSquare);
