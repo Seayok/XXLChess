@@ -5,7 +5,7 @@ import processing.core.PApplet;
 /**
  * Class representing the game.
  */
-public class Game implements LiveObject {
+public class Game {
   private Board board;
   private App app;
   private Player player1;
@@ -141,7 +141,11 @@ public class Game implements LiveObject {
     prevVal = curPlayer.getClock().getCountDown();
   }
 
-  @Override
+  /**
+   * Update game state and draw components.
+   *
+   * @param app the main application.
+   */
   public void tick(PApplet app) {
     if (curPlayer.isBot() && !gameOver) {
       processMoveState(curPlayer.guessMove(board, prevVal));

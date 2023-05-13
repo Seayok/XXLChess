@@ -1,7 +1,7 @@
 package XXLChess;
 
 /**
- * class of the Guard.
+ * Class of the Guard.
  */
 public class Guard extends Piece {
 

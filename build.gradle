@@ -20,7 +20,7 @@ repositories {
     // You can declare any Maven/Ivy/file repository here.
     mavenCentral()
 }
-
+configurations.implementation.canBeResolved = true
 dependencies {
     // This dependency is used by the application.
     implementation 'com.google.guava:guava:28.0-jre'
@@ -53,4 +53,10 @@ jar {
     from {
         configurations.runtimeClasspath.findAll { it.name.endsWith('jar') }.collect { zipTree(it) }
     }
+}
+
+task generateJavadoc(type: Javadoc) {
+    source = sourceSets.main.allJava
+    classpath += configurations.implementation
+    destinationDir = file("./chessdocs/javadoc")
 }

@@ -1,7 +1,7 @@
 package XXLChess;
 
 /**
- * class of the Archbishop.
+ * Class of the Archbishop.
  */
 public class Archbishop extends Piece {
 

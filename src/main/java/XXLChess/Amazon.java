@@ -1,7 +1,7 @@
 package XXLChess;
 
 /**
- * class of the Amazon.
+ * Class of the Amazon.
  */
 public class Amazon extends Piece {
 

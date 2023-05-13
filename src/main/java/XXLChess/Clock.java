@@ -5,7 +5,7 @@ import processing.core.PApplet;
 /**
  * This class represents a clock for each player.
  */
-public class Clock extends GameObject implements LiveObject {
+public class Clock extends GameObject {
   private Timer timer;
   private boolean counting = false;
   private int countdown;
@@ -39,8 +39,15 @@ public class Clock extends GameObject implements LiveObject {
     counting = false;
   }
 
+
+
+  public int getCountDown() {
+    return countdown;
+  }
+
+
   @Override
-  public void tick(PApplet applet) {
+  public void draw(PApplet applet) {
     App app = (App) applet;
     if (counting) {
       if (timer.complete(app)) {
@@ -51,16 +58,6 @@ public class Clock extends GameObject implements LiveObject {
         timer.start(app);
       }
     }
-  }
-
-  public int getCountDown() {
-    return countdown;
-  }
-
-
-  @Override
-  public void draw(PApplet app) {
-    tick(app);
     int min = countdown / 60;
     int sec = countdown % 60;
     String s = String.format("%02d:%02d", min, sec);

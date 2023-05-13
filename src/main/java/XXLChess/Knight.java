@@ -1,7 +1,7 @@
 package XXLChess;
 
 /**
- * class of the King.
+ * Class of the Knight.
  */
 public class Knight extends Piece {
   public Knight(float x, float y, String code, Square curSquare) {

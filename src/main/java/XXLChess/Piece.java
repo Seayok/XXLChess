@@ -9,22 +9,24 @@ import processing.core.PImage;
 /**
  * Abtract class representing a piece.
  */
-public abstract class Piece extends GameObject implements LiveObject {
+public abstract class Piece extends GameObject {
   public static final int GRIDNUM = Board.GRIDNUM;
   public static final int GRIDSIZE = Board.GRIDSIZE;
-  public static PImage BLACK_QUEEN_IMAGE;
-  public static PImage WHITE_QUEEN_IMAGE;
   public static final int FPS = 60;
   public static final int DIRECTION_NUMBER = 4;
-  protected static final int HORSE_RANGE = 2;
-  protected static final int CAMEL_RANGE = 3;
+  public static final int HORSE_RANGE = 2;
+  public static final int CAMEL_RANGE = 3;
   public static final int[] Y_STRAIGHT_DIRECTION = {-1, 0, 1, 0};
   public static final int[] X_STRAIGHT_DIRECTION = {0, 1, 0, -1};
   public static final int[] Y_DIAGONAL_DIRECTION = {-1, -1, 1, 1};
   public static final int[] X_DIAGONAL_DIRECTION = {1, -1, -1, 1};
-  private static double movementSpeed;
+
+  protected static PImage blackQueenImage;
+  protected static PImage whiteQueenImage;
   protected static int pawnDirection;
   protected static int movementTime;
+
+  private static double movementSpeed;
 
   private double overrideSpeed;
   protected float destX;
@@ -93,9 +95,9 @@ public abstract class Piece extends GameObject implements LiveObject {
     this.sprite = app.loadImage(dir);
     this.sprite.resize(GRIDSIZE, GRIDSIZE);
 
-    if (WHITE_QUEEN_IMAGE == null) {
-      WHITE_QUEEN_IMAGE = app.loadImage("src/main/resources/XXLChess/wq.png");
-      BLACK_QUEEN_IMAGE = app.loadImage("src/main/resources/XXLChess/bq.png");
+    if (whiteQueenImage == null) {
+      whiteQueenImage = app.loadImage("src/main/resources/XXLChess/wq.png");
+      blackQueenImage = app.loadImage("src/main/resources/XXLChess/bq.png");
     }
   }
 
@@ -310,28 +312,6 @@ public abstract class Piece extends GameObject implements LiveObject {
 
   }
 
-  @Override
-  public void tick(PApplet app) {
-    double movementSpeed = Piece.movementSpeed;
-    if (overrideSpeed > 0) {
-      movementSpeed = overrideSpeed;
-    }
-    float distX = cordX - displayX;
-    float distY = cordY - displayY;
-    double distance = Math.sqrt(Math.pow(distX, 2) + Math.pow(distY, 2));
-    if (distance > movementSpeed) {
-      cordX += Math.cos(direction) * movementSpeed;
-      cordY += Math.sin(direction) * movementSpeed;
-    } else {
-      cordX = this.destX;
-      cordY = this.destY;
-      overrideSpeed = 0;
-      moving = false;
-    }
-    app.image(this.sprite, cordX, cordY);
-  }
-
-
   /**
    * Set the destination square of that the piece is going to move to.
    *
@@ -403,7 +383,7 @@ public abstract class Piece extends GameObject implements LiveObject {
   }
 
   public void setPromotedSprite() {
-    this.sprite = isWhite ? WHITE_QUEEN_IMAGE : BLACK_QUEEN_IMAGE;
+    this.sprite = isWhite ? whiteQueenImage : blackQueenImage;
     this.sprite.resize(GRIDSIZE, GRIDSIZE);
   }
 
@@ -421,6 +401,22 @@ public abstract class Piece extends GameObject implements LiveObject {
    * @param app The window to draw onto.
    */
   public void draw(PApplet app) {
-    tick(app);
+    double movementSpeed = Piece.movementSpeed;
+    if (overrideSpeed > 0) {
+      movementSpeed = overrideSpeed;
+    }
+    float distX = cordX - displayX;
+    float distY = cordY - displayY;
+    double distance = Math.sqrt(Math.pow(distX, 2) + Math.pow(distY, 2));
+    if (distance > movementSpeed) {
+      cordX += Math.cos(direction) * movementSpeed;
+      cordY += Math.sin(direction) * movementSpeed;
+    } else {
+      cordX = this.destX;
+      cordY = this.destY;
+      overrideSpeed = 0;
+      moving = false;
+    }
+    app.image(this.sprite, cordX, cordY);
   }
 }
