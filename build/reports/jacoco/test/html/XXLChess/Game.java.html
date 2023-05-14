@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Game.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">chess_origin copy</a> &gt; <a href="index.source.html" class="el_package">XXLChess</a> &gt; <span class="el_source">Game.java</span></div><h1>Game.java</h1><pre class="source lang-java linenums">package XXLChess;
+
+import processing.core.PApplet;
+
+/**
+ * Class representing the game.
+ */
+public class Game {
+  private Board board;
+  private App app;
+  private Player player1;
+  private boolean gameOver;
+  private Player player2;
+  private Player curPlayer;
+  private int gameState;
+  private int moveState; // 0 = start, 1 = choose, 2 = success, 3 = illegal
+  private Message textBox;
+
+  /**
+   * Constructor for creating new game.
+   *
+   * @param board is a board we run our game on.
+   * @param app is the application we run our game on.
+   * @param player1 is the first player.
+   * @param player2 is the second player.
+   * @param textBox is the message box that displays messages.
+   */
+<span class="fc" id="L28">  public Game(Board board, App app, Player player1, Player player2, Message textBox) {</span>
+<span class="fc" id="L29">    this.app = app;</span>
+<span class="fc" id="L30">    this.board = board;</span>
+<span class="fc" id="L31">    this.player1 = player1;</span>
+<span class="fc" id="L32">    this.player2 = player2;</span>
+<span class="fc" id="L33">    this.textBox = textBox;</span>
+<span class="fc bfc" id="L34" title="All 2 branches covered.">    this.curPlayer = player1.isWhite() ? player1 : player2;</span>
+<span class="fc" id="L35">  }</span>
+
+  /**
+   * Display appropriate message and timer based on the state of the game.
+   *
+   * @param status is the status from the board. 0 is normal, 1 is being checked, 2 is playing legal
+   *        move while in check, 3 is checkmate, 4 is timer over, 5 is resign, 6 is draw.
+   */
+  public void updateGameStatus(int status) {
+<span class="fc bfc" id="L44" title="All 7 branches covered.">    switch (status) {</span>
+      case 1:
+<span class="fc" id="L46">        textBox.checkMessage();</span>
+<span class="fc" id="L47">        break;</span>
+      case 2:
+<span class="fc" id="L49">        textBox.checkWarning();</span>
+<span class="fc" id="L50">        break;</span>
+      case 3:
+<span class="fc" id="L52">        textBox.checkMate(curPlayer);</span>
+<span class="fc" id="L53">        break;</span>
+      case 4:
+<span class="fc" id="L55">        gameOver = true;</span>
+<span class="fc" id="L56">        textBox.timeOver(curPlayer);</span>
+<span class="fc" id="L57">        break;</span>
+      case 5:
+<span class="fc" id="L59">        textBox.resign();</span>
+<span class="fc" id="L60">        break;</span>
+      case 6:
+<span class="fc" id="L62">        textBox.drawMessage();</span>
+<span class="fc" id="L63">        break;</span>
+      default:
+<span class="fc" id="L65">        textBox.hide();</span>
+    }
+
+<span class="fc bfc" id="L68" title="All 2 branches covered.">    if (status &gt;= 3) {</span>
+<span class="fc" id="L69">      player1.getClock().stop(false);</span>
+<span class="fc" id="L70">      player2.getClock().stop(false);</span>
+    }
+<span class="fc" id="L72">  }</span>
+
+  public boolean isOver() {
+<span class="fc" id="L75">    return gameOver;</span>
+  }
+
+  /**
+   * Updates the game state after player resign.
+   */
+  public void resign() {
+<span class="fc" id="L82">    gameOver = true;</span>
+<span class="fc" id="L83">    updateGameStatus(5);</span>
+<span class="fc" id="L84">  }</span>
+
+  /**
+   * Update the game state base on the move information from the previous move.
+   *
+   * @param moveState is the status of the previous legal move, 2 is success, 3 is failure since the
+   *        previous legal move did not protect the kings
+   */
+  public void processMoveState(int moveState) {
+<span class="fc bfc" id="L93" title="All 2 branches covered.">    if (moveState == 2) {</span>
+<span class="fc" id="L94">      gameState = 0;</span>
+<span class="fc" id="L95">      this.moveState = 0;</span>
+<span class="fc" id="L96">      switchTurn();</span>
+<span class="fc bfc" id="L97" title="All 2 branches covered.">      if (board.checkCheck()) {</span>
+<span class="fc" id="L98">        gameState = 1;</span>
+<span class="fc bfc" id="L99" title="All 2 branches covered.">        if (board.checkCheckMate()) {</span>
+<span class="fc" id="L100">          gameOver = true;</span>
+<span class="fc" id="L101">          gameState = 3;</span>
+<span class="fc" id="L102">          board.displayCheckMatePiece();</span>
+        }
+<span class="fc bfc" id="L104" title="All 2 branches covered.">      } else if (board.checkCheckMate()) {</span>
+<span class="fc" id="L105">        gameOver = true;</span>
+<span class="fc" id="L106">        gameState = 6;</span>
+      }
+    }
+<span class="fc bfc" id="L109" title="All 2 branches covered.">    if (moveState == 3) {</span>
+<span class="fc" id="L110">      gameState = 2;</span>
+    }
+<span class="fc" id="L112">    updateGameStatus(gameState);</span>
+<span class="fc" id="L113">  }</span>
+
+  /**
+   * Process the mouse click event from user.
+   *
+   * @param x is the x coordinate of the click.
+   * @param y is the y coordinate of the click.
+   */
+  public void mouseClicked(int x, int y) {
+<span class="pc bpc" id="L122" title="4 of 8 branches missed.">    if (!gameOver &amp;&amp; x &lt; board.getSize() &amp;&amp; y &lt; board.getSize() &amp;&amp; !curPlayer.isBot()) {</span>
+<span class="fc bfc" id="L123" title="All 2 branches covered.">      if (moveState == 0) {</span>
+<span class="fc" id="L124">        moveState = board.startClick(x, y);</span>
+      } else {
+<span class="fc" id="L126">        moveState = board.selectClick(x, y);</span>
+      }
+<span class="fc" id="L128">      processMoveState(moveState);</span>
+    }
+<span class="fc" id="L130">  }</span>
+
+  /**
+   * Switch turn of the player.
+   */
+  public void switchTurn() {
+<span class="fc" id="L136">    curPlayer.getClock().stop(true);</span>
+<span class="fc bfc" id="L137" title="All 2 branches covered.">    curPlayer = (curPlayer == player1) ? player2 : player1;</span>
+<span class="fc" id="L138">    curPlayer.getClock().start(app);</span>
+<span class="fc" id="L139">  }</span>
+
+  /**
+   * Update game state and draw components.
+   *
+   * @param app the main application.
+   */
+  public void tick(PApplet app) {
+<span class="nc" id="L147">    textBox.draw(app);</span>
+<span class="nc bnc" id="L148" title="All 2 branches missed.">    if (!curPlayer.isCalculating()) {</span>
+<span class="nc" id="L149">      board.draw(app);</span>
+    }
+<span class="nc" id="L151">    player1.getClock().draw(app);</span>
+<span class="nc" id="L152">    player2.getClock().draw(app);</span>
+<span class="nc bnc" id="L153" title="All 6 branches missed.">    if (curPlayer.isBot() &amp;&amp; !gameOver &amp;&amp; Piece.movingPieces == 0) {</span>
+<span class="nc" id="L154">      processMoveState(curPlayer.guessMove(board));</span>
+    }
+<span class="nc" id="L156">  }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span></div></body></html>

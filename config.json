@@ -1,12 +1,12 @@
 {
-  "layout": "matetest.txt",
+  "layout": "level1.txt",
   "time_controls": {
     "player": {
-      "seconds": 1800,
+      "seconds": 180,
       "increment": 2
     },
     "cpu": {
-      "seconds": 1800,
+      "seconds": 180,
       "increment": 2
     }
   },

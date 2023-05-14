@@ -15,7 +15,6 @@ public class Player {
   private Board curBoard;
   private Move moveToPlay;
   private boolean calculating;
-  private boolean isLose;
   private int depth;
   private Clock clock;
 
@@ -24,16 +23,9 @@ public class Player {
     this.isBot = isBot;
   }
 
-  public void lose() {
-    this.isLose = true;
-  }
 
   public boolean isBot() {
     return isBot;
-  }
-
-  public boolean isLose() {
-    return isLose;
   }
 
   public boolean isWhite() {
@@ -69,14 +61,10 @@ public class Player {
    * Start calculating the move after 1 second of switching turns.
    *
    * @param curBoard the board on which players are playing.
-   * @param prevVal the preivious value of the clock.
    * @return the move state: 0 is not finished calculating, 1 is finished calculating and made the
    *         move.
    */
-  public int guessMove(Board curBoard, int prevVal) {
-    if (clock.getCountDown() == prevVal) {
-      return 0;
-    }
+  public int guessMove(Board curBoard) {
     if (!calculating) {
       this.curBoard = curBoard;
       calculating = true;
@@ -104,7 +92,7 @@ public class Player {
     executor.shutdown();
   }
 
-  class CalculateMove implements Runnable {
+  private class CalculateMove implements Runnable {
     public void run() {
       Random generator = new Random();
       List<Move> moveList = curBoard.getAllMoves(isWhite, true);

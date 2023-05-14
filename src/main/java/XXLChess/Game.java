@@ -14,7 +14,6 @@ public class Game {
   private Player curPlayer;
   private int gameState;
   private int moveState; // 0 = start, 1 = choose, 2 = success, 3 = illegal
-  private int prevVal;
   private Message textBox;
 
   /**
@@ -43,9 +42,6 @@ public class Game {
    */
   public void updateGameStatus(int status) {
     switch (status) {
-      case 0:
-        textBox.hide();
-        break;
       case 1:
         textBox.checkMessage();
         break;
@@ -75,11 +71,14 @@ public class Game {
     }
   }
 
+  public boolean isOver() {
+    return gameOver;
+  }
+
   /**
    * Updates the game state after player resign.
    */
   public void resign() {
-    curPlayer.lose();
     gameOver = true;
     updateGameStatus(5);
   }
@@ -120,7 +119,6 @@ public class Game {
    * @param y is the y coordinate of the click.
    */
   public void mouseClicked(int x, int y) {
-    // if (!gameOver && x < board.getSize() && y < board.getSize()) {
     if (!gameOver && x < board.getSize() && y < board.getSize() && !curPlayer.isBot()) {
       if (moveState == 0) {
         moveState = board.startClick(x, y);
@@ -138,7 +136,6 @@ public class Game {
     curPlayer.getClock().stop(true);
     curPlayer = (curPlayer == player1) ? player2 : player1;
     curPlayer.getClock().start(app);
-    prevVal = curPlayer.getClock().getCountDown();
   }
 
   /**
@@ -147,14 +144,14 @@ public class Game {
    * @param app the main application.
    */
   public void tick(PApplet app) {
-    if (curPlayer.isBot() && !gameOver) {
-      processMoveState(curPlayer.guessMove(board, prevVal));
-    }
     textBox.draw(app);
     if (!curPlayer.isCalculating()) {
       board.draw(app);
     }
     player1.getClock().draw(app);
     player2.getClock().draw(app);
+    if (curPlayer.isBot() && !gameOver && Piece.movingPieces == 0) {
+      processMoveState(curPlayer.guessMove(board));
+    }
   }
 }

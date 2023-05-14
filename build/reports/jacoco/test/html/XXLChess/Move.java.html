@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Move.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">chess_origin copy</a> &gt; <a href="index.source.html" class="el_package">XXLChess</a> &gt; <span class="el_source">Move.java</span></div><h1>Move.java</h1><pre class="source lang-java linenums">package XXLChess;
+
+/**
+ * Class representing a move.
+ */
+public class Move {
+  public static final int NORMAL = 0;
+  public static final int CAPTURE = 1;
+  public static final int CASTLE = 2;
+  public static final int THREAT = 3;
+
+
+  private Square startSquare;
+  private Square endSquare;
+  private boolean promotion;
+  private int flag;
+  private double score;
+  private Piece promotedPiece;
+  private Piece sourcePiece;
+  private Piece destPiece;
+  private Move subMove;
+
+  /**
+   * Contruct a new move.
+   *
+   * @param startSquare is the start square.
+   * @param endSquare is the end square.
+   * @param flag is the flag of the move: 0 is normal, 1 is capture, 2 is castle, 3 is threat.
+   * @param sourcePiece is the moving piece.
+   * @param destPiece is the piece of the destination.
+   */
+<span class="fc" id="L32">  public Move(Square startSquare, Square endSquare, int flag, Piece sourcePiece, Piece destPiece) {</span>
+<span class="fc" id="L33">    this.startSquare = startSquare;</span>
+<span class="fc" id="L34">    this.endSquare = endSquare;</span>
+<span class="fc" id="L35">    this.flag = flag;</span>
+<span class="fc" id="L36">    this.sourcePiece = sourcePiece;</span>
+<span class="fc" id="L37">    this.destPiece = destPiece;</span>
+<span class="fc" id="L38">    promotion = false;</span>
+<span class="fc" id="L39">  }</span>
+
+  public void setScore(double score) {
+<span class="fc" id="L42">    this.score = score;</span>
+<span class="fc" id="L43">  }</span>
+
+  public void setPromotedPiece(Piece piece) {
+<span class="fc" id="L46">    this.promotedPiece = piece;</span>
+<span class="fc" id="L47">  }</span>
+
+  public Piece getPromotedPiece() {
+<span class="fc" id="L50">    return promotedPiece;</span>
+  }
+
+  public boolean isPromotion() {
+<span class="fc" id="L54">    return promotion;</span>
+  }
+
+  public double getScore() {
+<span class="fc" id="L58">    return score;</span>
+  }
+
+  public Move getSubMove() {
+<span class="fc" id="L62">    return subMove;</span>
+  }
+
+  public void promotion() {
+<span class="fc" id="L66">    this.promotion = true;</span>
+<span class="fc" id="L67">  }</span>
+
+  public void setSubMove(Move subMove) {
+<span class="fc" id="L70">    this.subMove = subMove;</span>
+<span class="fc" id="L71">  }</span>
+
+  public Piece getSourcePiece() {
+<span class="fc" id="L74">    return sourcePiece;</span>
+  }
+
+
+  public Piece getDestinationPiece() {
+<span class="fc" id="L79">    return destPiece;</span>
+  }
+
+  public int getFlag() {
+<span class="fc" id="L83">    return flag;</span>
+  }
+
+  public Square getStartSquare() {
+<span class="fc" id="L87">    return startSquare;</span>
+  }
+
+  public Square getEndSquare() {
+<span class="fc" id="L91">    return endSquare;</span>
+  }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span></div></body></html>

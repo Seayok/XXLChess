@@ -14,7 +14,7 @@ public class Square extends GameObject {
   public static final int[] DARK_RED = {215, 0, 0};
   public static final int[] PURPLE = {159, 43, 104};
   public static final int[] LIGHT_RED = {255, 164, 102};
-  public static final int flashDuration = 30; // in frames
+  public static final int FLASH_DURATION = 30; // in frames
 
   private boolean selected;
   private int numFlashes;
@@ -134,6 +134,10 @@ public class Square extends GameObject {
     return onCaptureway;
   }
 
+  public int[] getColor() {
+    return color;
+  }
+
   /**
    * Function to display flashing if the player made a legal move not protect the king while king is
    * in check.
@@ -142,7 +146,7 @@ public class Square extends GameObject {
     if (numFlashes > 0) {
       if (curCoolDown == 0) {
         if (numFlashes != 1) {
-          curCoolDown = flashDuration;
+          curCoolDown = FLASH_DURATION;
         }
         numFlashes--;
       } else {

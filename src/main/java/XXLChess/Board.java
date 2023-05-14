@@ -10,7 +10,7 @@ import processing.core.PApplet;
  * Represents a board.
  */
 public class Board extends GameObject {
-  public static final int[] pieceSquareTables = {-20, -15, -10, -10, -10, -5, -5, -5, -5, -10, -10,
+  public static final int[] PIECE_SQUARE_TABLE = {-20, -15, -10, -10, -10, -5, -5, -5, -5, -10, -10,
       -10, -15, -20, -10, -5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -5, -10, -10, 0, 0, 0, 5, 5, 5, 5, 5, 5,
       0, 0, 0, -10, -5, 0, 0, 0, 5, 5, 5, 5, 5, 5, 0, 0, 0, -5, 0, 0, 0, 5, 10, 10, 10, 10, 10, 10,
       5, 0, 0, 0, 0, 0, 5, 10, 10, 15, 15, 15, 15, 10, 10, 5, 0, 0, 0, 5, 10, 10, 15, 15, 20, 20,
@@ -20,7 +20,6 @@ public class Board extends GameObject {
       0, 0, 0, 0, 0, 0, -5, -10, -20, -15, -10, -10, -10, -5, -5, -5, -5, -10, -10, -10, -15, -20};
   public static final int GRIDSIZE = 48;
   public static final int GRIDNUM = 14;
-  public static double MAX_MOVEMENT_TIME;
 
   private boolean whiteTurn = true;
   private Piece[] king;
@@ -40,6 +39,7 @@ public class Board extends GameObject {
    */
   public Board(String[][] levelArr, PApplet app) {
     super(0, 0);
+
     squareMat = new Square[GRIDNUM][GRIDNUM];
     king = new Piece[2];
     whiteAttackers = new CopyOnWriteArrayList<>();
@@ -144,7 +144,7 @@ public class Board extends GameObject {
    * @param move is the move to execute.
    * @param display is the flag indicating whether the change to the board will display or not(not
    *        display is for AI computing moves).
-   * @param submove indicates whether the move has the submove to be executed first.
+   * @param submove indicates whether the move is the submove.
    */
   public void makeMove(Move move, boolean display, boolean submove) {
 
@@ -163,12 +163,15 @@ public class Board extends GameObject {
       move.setPromotedPiece(movePiece);
       pieceList.add(movePiece);
     }
+
     if (move.getFlag() == Move.CAPTURE) {
       pieceList.remove(move.getDestinationPiece());
     }
+
     target.setPiece(movePiece);
     start.setPiece(null);
     movePiece.setDestination(target);
+
     if (display) {
       movePiece.startMoving();
       if (move.isPromotion()) {
@@ -176,7 +179,9 @@ public class Board extends GameObject {
       }
       resetSquares(move.getStartSquare(), move.getEndSquare());
     }
+
     movePiece.setMoved(true);
+
     if (!submove) {
       whiteTurn = !whiteTurn;
       newMoveSet();
@@ -259,11 +264,14 @@ public class Board extends GameObject {
     Piece kingPiece = king[whiteTurn ? 1 : 0];
     List<Move> kingMoves = new ArrayList<>(kingPiece.getPreLegalMoves());
     Square kingSquare = kingPiece.getSquare();
+
     kingMoves.add(new Move(kingPiece.getSquare(), kingSquare, Move.NORMAL, kingPiece, null));
     kingSquare.setPiece(null);
+
     for (Move m : kingMoves) {
       Square s = m.getEndSquare();
       Piece p = pieceAttackSquare(whiteTurn, s);
+
       if (p == null) {
         final Piece prevPiece = s.getPiece();
         s.setPiece(null);
@@ -272,8 +280,10 @@ public class Board extends GameObject {
         s.setPiece(prevPiece);
         newMoveSet();
       }
+
       occupiedSquare.add(p.getSquare());
     }
+
     for (Square s : occupiedSquare) {
       s.setOnCapture(true);
     }
@@ -289,21 +299,26 @@ public class Board extends GameObject {
   public void resetSquares(Square prevSquare, Square target) {
     for (int i = 0; i < GRIDNUM; i++) {
       for (int j = 0; j < GRIDNUM; j++) {
+
         Square square = squareMat[i][j];
         square.setOnPieceWay(false);
         square.setOnCapture(false);
         square.setSpecial(false);
+
         if (target != null) {
           square.setPrevMove(false);
           square.unWarning();
           square.setKingChecked(false);
         }
+
       }
     }
+
     if (target != null) {
       prevSquare.setPrevMove(true);
       target.setPrevMove(true);
     }
+
     prevSquare.deselect();
     selPiece = null;
   }
@@ -334,16 +349,21 @@ public class Board extends GameObject {
    */
   public double forceKingToEdge() {
     double eval = 0;
+
     Piece theirKing = king[whiteTurn ? 1 : 0];
     Piece ourKing = king[whiteTurn ? 0 : 1];
+
     double dstxToCenter =
         Math.max((theirKing.getDesX() / GRIDSIZE) - 6, 7 - (theirKing.getDesX() / GRIDSIZE));
     double dstyToCenter =
         Math.max((theirKing.getDesY() / GRIDSIZE) - 6, 7 - (theirKing.getDesY() / GRIDSIZE));
+
     double dstxToOpponent = Math.abs(ourKing.getDesX() - theirKing.getDesX()) / GRIDSIZE;
     double dstyToOpponent = Math.abs(ourKing.getDesY() - theirKing.getDesY()) / GRIDSIZE;
+
     eval += dstxToCenter + dstyToCenter;
     eval += (26 - dstxToOpponent - dstyToOpponent) / 260;
+
     return eval * (56 - pieceList.size()) / 600;
   }
 
@@ -357,21 +377,27 @@ public class Board extends GameObject {
   public double evaluateBoard() {
     double res = 0;
     for (Piece p : pieceList) {
+
       res += p.getValue();
+
       if (pieceList.size() > 10) {
         if (!p.getCode().contains("k")) {
-          double pawnWeight = (p.getCode().contains("p") ? 4 : 1);
-          double offset =
-              (pieceSquareTables[(int) p.getDesX() / GRIDSIZE + 14 * (int) (p.getDesY() / GRIDSIZE)]
-                  * (p.isWhitePiece() ? 1 : -1) * pieceList.size() * pawnWeight) / 1000;
+          double pawnWeight = (p.getCode().contains("p") ? 3 : 1);
+          double offset = (PIECE_SQUARE_TABLE[(int) p.getDesX() / GRIDSIZE
+              + 14 * (int) (p.getDesY() / GRIDSIZE)] * (p.isWhitePiece() ? 1 : -1)
+              * pieceList.size() * pawnWeight) / 1000;
+
           res += offset;
         } else {
+
           if (p.isMoved()) {
             res += 0.5 * (p.isWhitePiece() ? 1 : -1);
           }
+
         }
       }
     }
+
     if (checkCheckMate()) {
       if (!checkCheck()) {
         return 0;
@@ -379,7 +405,9 @@ public class Board extends GameObject {
         return Double.MAX_VALUE * (whiteTurn ? -1 : 1);
       }
     }
+
     res += forceKingToEdge() * (whiteTurn ? -1 : 1);
+
     return res;
   }
 
@@ -421,12 +449,17 @@ public class Board extends GameObject {
         res = whiteTurn ? -Double.POSITIVE_INFINITY : Double.POSITIVE_INFINITY;
       }
     } else if (beta > alpha) {
+
       List<Move> moveList = getAllMoves(maximize, true);
+
       for (Move m : moveList) {
+
         if (m.getFlag() != Move.CAPTURE) {
           continue;
         }
+
         double eval = evaluateCapture(m, alpha, beta, !maximize);
+
         if (maximize) {
           res = Math.max(res, eval);
           alpha = Math.max(alpha, eval);
@@ -475,6 +508,8 @@ public class Board extends GameObject {
 
     makeMove(move, false, false);
 
+    List<Move> moveList = getAllMoves(maximize, true);
+
     if (checkCheckMate()) {
       if (!checkCheck()) {
         res = 0;
@@ -482,11 +517,15 @@ public class Board extends GameObject {
         res = whiteTurn ? -Double.POSITIVE_INFINITY : Double.POSITIVE_INFINITY;
       }
     } else if (depth == 0) {
+
       res = evaluateBoard();
-      List<Move> moveList = getAllMoves(maximize, true);
+
+
       for (Move m : moveList) {
+
         if (m.getFlag() == Move.CAPTURE) {
           double eval = evaluateCapture(m, alpha, beta, !maximize);
+
           if (maximize) {
             res = Math.max(res, eval);
             alpha = Math.max(alpha, eval);
@@ -494,13 +533,13 @@ public class Board extends GameObject {
             res = Math.min(res, eval);
             beta = Math.min(beta, eval);
           }
+
           if (beta <= alpha) {
             break;
           }
         }
       }
     } else {
-      List<Move> moveList = getAllMoves(maximize, true);
       for (Move m : moveList) {
         double eval = evaluateMove(m, depth - 1, alpha, beta, !maximize);
         if (maximize) {
@@ -542,12 +581,15 @@ public class Board extends GameObject {
     final Piece movePiece = move.getSourcePiece();
     final Square startSquare = move.getStartSquare();
     final Square endSquare = move.getEndSquare();
+
     if (move.getFlag() == Move.CASTLE) {
       unmove(move.getSubMove(), false, true);
     }
+
     if (!submove) {
       whiteTurn = !whiteTurn;
     }
+
     endSquare.setPiece(move.getDestinationPiece());
     startSquare.setPiece(movePiece);
     movePiece.setDestination(startSquare);

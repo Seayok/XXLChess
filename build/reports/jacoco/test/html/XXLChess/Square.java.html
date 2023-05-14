@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Square.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">chess_origin copy</a> &gt; <a href="index.source.html" class="el_package">XXLChess</a> &gt; <span class="el_source">Square.java</span></div><h1>Square.java</h1><pre class="source lang-java linenums">package XXLChess;
+
+import processing.core.PApplet;
+
+/**
+ * Represents a square on the board.
+ */
+public class Square extends GameObject {
+  public static final int SQUARESIZE = 48;
+<span class="fc" id="L10">  public static final int[] LIGHT_BROWN = {240, 217, 181};</span>
+<span class="fc" id="L11">  public static final int[] DARK_GREEN = {105, 138, 76};</span>
+<span class="fc" id="L12">  public static final int[] LIGHT_GREEN = {171, 162, 59};</span>
+<span class="fc" id="L13">  public static final int[] LIGHT_BlUE = {196, 224, 232};</span>
+<span class="fc" id="L14">  public static final int[] DARK_RED = {215, 0, 0};</span>
+<span class="fc" id="L15">  public static final int[] PURPLE = {159, 43, 104};</span>
+<span class="fc" id="L16">  public static final int[] LIGHT_RED = {255, 164, 102};</span>
+  public static final int FLASH_DURATION = 30; // in frames
+
+  private boolean selected;
+  private int numFlashes;
+  private int curCoolDown;
+  private Piece curPiece;
+  private boolean prevMove;
+  private boolean special;
+  private boolean onPieceWay;
+  private boolean kingChecked;
+  private boolean onCaptureway;
+  private boolean[] underControl; // 1 white //2 black
+  private int[] color;
+
+  /**
+   * Creates a new square with coordinates and colors.
+   *
+   * @param x the x position.
+   * @param y the y position.
+   * @param app the main application.
+   */
+  public Square(int x, int y, PApplet app) {
+<span class="fc" id="L39">    super(x * SQUARESIZE, y * SQUARESIZE);</span>
+<span class="fc" id="L40">    color = new int[3];</span>
+<span class="fc" id="L41">    underControl = new boolean[2];</span>
+<span class="fc" id="L42">  }</span>
+
+  public void setPiece(Piece piece) {
+<span class="fc" id="L45">    this.curPiece = piece;</span>
+<span class="fc" id="L46">  }</span>
+
+  public Piece getPiece() {
+<span class="fc" id="L49">    return curPiece;</span>
+  }
+
+  public boolean isControl(boolean isWhite) {
+<span class="fc bfc" id="L53" title="All 2 branches covered.">    return underControl[isWhite ? 1 : 0];</span>
+  }
+
+  public void underControl(boolean isWhite) {
+<span class="fc bfc" id="L57" title="All 2 branches covered.">    underControl[isWhite ? 1 : 0] = true;</span>
+<span class="fc" id="L58">  }</span>
+
+  public void setSpecial(boolean special) {
+<span class="fc" id="L61">    this.special = special;</span>
+<span class="fc" id="L62">  }</span>
+
+  public void noControl() {
+<span class="fc" id="L65">    underControl[0] = false;</span>
+<span class="fc" id="L66">    underControl[1] = false;</span>
+<span class="fc" id="L67">  }</span>
+
+  /**
+   * Change color according the flags of the square.
+   */
+  public void setColor() {
+<span class="fc bfc" id="L73" title="All 2 branches covered.">    if (selected) {</span>
+<span class="fc" id="L74">      color = DARK_GREEN;</span>
+<span class="fc bfc" id="L75" title="All 2 branches covered.">    } else if (kingChecked) {</span>
+<span class="fc" id="L76">      color = DARK_RED;</span>
+<span class="fc bfc" id="L77" title="All 2 branches covered.">    } else if (special) {</span>
+<span class="fc" id="L78">      color = PURPLE;</span>
+<span class="fc bfc" id="L79" title="All 2 branches covered.">    } else if (onPieceWay) {</span>
+<span class="fc" id="L80">      color = LIGHT_BlUE;</span>
+<span class="fc bfc" id="L81" title="All 2 branches covered.">    } else if (onCaptureway) {</span>
+<span class="fc" id="L82">      color = LIGHT_RED;</span>
+<span class="fc bfc" id="L83" title="All 2 branches covered.">    } else if (prevMove) {</span>
+<span class="fc" id="L84">      color = LIGHT_GREEN;</span>
+    } else {
+<span class="fc" id="L86">      color = LIGHT_BROWN;</span>
+    }
+<span class="fc" id="L88">    return;</span>
+  }
+
+  public void setKingChecked(boolean check) {
+<span class="fc" id="L92">    this.kingChecked = check;</span>
+<span class="fc" id="L93">  }</span>
+
+  public boolean isKingChecked() {
+<span class="fc" id="L96">    return kingChecked;</span>
+  }
+
+  public void setPrevMove(boolean prevMove) {
+<span class="fc" id="L100">    this.prevMove = prevMove;</span>
+<span class="fc" id="L101">  }</span>
+
+  public boolean isOnPieceWay() {
+<span class="fc" id="L104">    return onPieceWay;</span>
+  }
+
+  public void setOnPieceWay(boolean onPieceWay) {
+<span class="fc" id="L108">    this.onPieceWay = onPieceWay;</span>
+<span class="fc" id="L109">  }</span>
+
+  public void deselect() {
+<span class="fc" id="L112">    selected = false;</span>
+<span class="fc" id="L113">  }</span>
+
+  public void setWarning() {
+<span class="fc" id="L116">    this.numFlashes = 7;</span>
+<span class="fc" id="L117">    this.curCoolDown = 0;</span>
+<span class="fc" id="L118">  }</span>
+
+  public void setOnCapture(boolean onCapture) {
+<span class="fc" id="L121">    onCaptureway = onCapture;</span>
+<span class="fc" id="L122">  }</span>
+
+  public void unWarning() {
+<span class="fc" id="L125">    this.numFlashes = 0;</span>
+<span class="fc" id="L126">    this.curCoolDown = 0;</span>
+<span class="fc" id="L127">  }</span>
+
+  public void onSelected() {
+<span class="fc" id="L130">    this.selected = true;</span>
+<span class="fc" id="L131">  }</span>
+
+  public boolean isOnCaptured() {
+<span class="fc" id="L134">    return onCaptureway;</span>
+  }
+
+  public int[] getColor() {
+<span class="fc" id="L138">    return color;</span>
+  }
+
+  /**
+   * Function to display flashing if the player made a legal move not protect the king while king is
+   * in check.
+   */
+  public void tick() {
+<span class="fc bfc" id="L146" title="All 2 branches covered.">    if (numFlashes &gt; 0) {</span>
+<span class="fc bfc" id="L147" title="All 2 branches covered.">      if (curCoolDown == 0) {</span>
+<span class="pc bpc" id="L148" title="1 of 2 branches missed.">        if (numFlashes != 1) {</span>
+<span class="fc" id="L149">          curCoolDown = FLASH_DURATION;</span>
+        }
+<span class="fc" id="L151">        numFlashes--;</span>
+      } else {
+<span class="fc" id="L153">        curCoolDown--;</span>
+<span class="pc bpc" id="L154" title="1 of 2 branches missed.">        this.setKingChecked(numFlashes % 2 == 1);</span>
+      }
+    }
+<span class="fc" id="L157">    setColor();</span>
+<span class="fc" id="L158">  }</span>
+
+  @Override
+  public void draw(PApplet app) {
+    // Draw square
+<span class="nc" id="L163">    tick();</span>
+<span class="nc" id="L164">    app.noStroke();</span>
+<span class="nc" id="L165">    app.fill(color[0], color[1], color[2]);</span>
+<span class="nc" id="L166">    app.rect(cordX, cordY, SQUARESIZE, SQUARESIZE);</span>
+<span class="nc bnc" id="L167" title="All 2 branches missed.">    if ((cordX + cordY) / 48 % 2 == 1) {</span>
+<span class="nc" id="L168">      app.noStroke();</span>
+<span class="nc" id="L169">      app.fill(60, 10, 0, 100);</span>
+<span class="nc" id="L170">      app.rect(cordX, cordY, SQUARESIZE, SQUARESIZE);</span>
+    }
+<span class="nc" id="L172">  }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span></div></body></html>

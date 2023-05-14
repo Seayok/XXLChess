@@ -25,6 +25,7 @@ public class King extends Piece {
       int row = (int) curSquare.getY() / GRIDSIZE;
       int offset = col + weight;
       Piece piece = null;
+
       while (offset >= 0 && offset < GRIDNUM) {
         Square horizontalSquare = squares[offset][row];
         piece = horizontalSquare.getPiece();
@@ -33,11 +34,13 @@ public class King extends Piece {
         }
         offset += weight;
       }
+
       if (Math.abs(offset - col) > 2 && piece != null && piece.isWhitePiece() == isWhite
           && !piece.isMoved && piece.getCode().contains("r")) {
         Move castle = new Move(curSquare, squares[col + 2 * weight][row], Move.CASTLE, this, null);
         Move submove =
             new Move(piece.getSquare(), squares[col + weight][row], Move.NORMAL, piece, null);
+
         castle.setSubMove(submove);
         preLegalMoves.add(castle);
       }

@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>App.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">chess_origin copy</a> &gt; <a href="index.source.html" class="el_package">XXLChess</a> &gt; <span class="el_source">App.java</span></div><h1>App.java</h1><pre class="source lang-java linenums">package XXLChess;
+
+import java.io.File;
+import processing.core.PApplet;
+import processing.data.JSONObject;
+import processing.event.MouseEvent;
+
+/**
+ * Main entry point for the application.
+ */
+public class App extends PApplet {
+
+  public static final int SPRITESIZE = 480;
+  public static final int CELLSIZE = 48;
+  public static final int SIDEBAR = 120;
+  public static final int BOARD_WIDTH = 14;
+
+  public static final int WIDTH = CELLSIZE * BOARD_WIDTH + SIDEBAR;
+  public static final int HEIGHT = BOARD_WIDTH * CELLSIZE;
+
+  public static final int FPS = 60;
+
+  public String configPath;
+
+  public Game game;
+  public Board board;
+  public Player player1;
+  public Player player2;
+  public Helper helper;
+  public Message textBox;
+
+  /**
+   * App constructor.
+   */
+<span class="fc" id="L35">  public App() {</span>
+<span class="fc" id="L36">    this.player1 = new Player();</span>
+<span class="fc" id="L37">    this.player2 = new Player();</span>
+<span class="fc" id="L38">    this.configPath = &quot;config.json&quot;;</span>
+<span class="fc" id="L39">    this.helper = new Helper();</span>
+<span class="fc" id="L40">    this.textBox = new Message(680, 300, 48);</span>
+<span class="fc" id="L41">  }</span>
+
+  /**
+   * Initialise the setting of the window size.
+   */
+  public void settings() {
+<span class="nc" id="L47">    size(WIDTH, HEIGHT);</span>
+<span class="nc" id="L48">  }</span>
+
+  /**
+   * Load all resources such as images. Initialise the elements such as the player, enemies and map
+   * elements.
+   */
+  public void setup() {
+<span class="nc" id="L55">    frameRate(FPS);</span>
+
+    // load config
+<span class="nc" id="L58">    JSONObject conf = loadJSONObject(new File(this.configPath));</span>
+<span class="nc" id="L59">    helper.setConfig(conf);</span>
+<span class="nc" id="L60">    helper.initTimeAndSide(player1, player2);</span>
+<span class="nc" id="L61">    helper.updateMoveStatus(conf, player1.isWhite());</span>
+<span class="nc bnc" id="L62" title="All 2 branches missed.">    Clock clockWhite = player1.isWhite() ? player1.getClock() : player2.getClock();</span>
+<span class="nc" id="L63">    clockWhite.start(this);</span>
+<span class="nc" id="L64">    board = new Board(helper.loadBoard(), this);</span>
+<span class="nc" id="L65">    game = new Game(board, this, player1, player2, textBox);</span>
+<span class="nc" id="L66">    board.setSpriteAndDisplay(this);</span>
+<span class="nc" id="L67">  }</span>
+
+  /**
+   * Receive key pressed signal from the keyboard.
+   */
+  public void keyPressed() {
+<span class="pc bpc" id="L73" title="3 of 4 branches missed.">    if (key == 'r' &amp;&amp; game.isOver()) {</span>
+<span class="nc" id="L74">      textBox.hide();</span>
+<span class="nc" id="L75">      this.player1 = new Player();</span>
+<span class="nc" id="L76">      this.player2 = new Player();</span>
+<span class="nc" id="L77">      setup();</span>
+    }
+<span class="pc bpc" id="L79" title="1 of 2 branches missed.">    if (key == 'e') {</span>
+<span class="nc" id="L80">      game.resign();</span>
+    }
+<span class="fc" id="L82">  }</span>
+
+
+  @Override
+  public void mousePressed(MouseEvent e) {
+<span class="nc" id="L87">    game.mouseClicked(e.getX(), e.getY());</span>
+<span class="nc" id="L88">  }</span>
+
+  /**
+   * Draw all elements in the game by current frame.
+   */
+  public void draw() {
+<span class="nc" id="L94">    fill(155);</span>
+<span class="nc" id="L95">    stroke(155);</span>
+<span class="nc" id="L96">    rect(672, 0, 150, 800);</span>
+<span class="nc" id="L97">    game.tick(this);</span>
+<span class="nc" id="L98">  }</span>
+
+  public void updateGameStatus(int status) {
+<span class="nc" id="L101">    game.updateGameStatus(status);</span>
+<span class="nc" id="L102">  }</span>
+
+  public static void main(String[] args) {
+<span class="nc" id="L105">    PApplet.main(&quot;XXLChess.App&quot;);</span>
+<span class="nc" id="L106">  }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span></div></body></html>

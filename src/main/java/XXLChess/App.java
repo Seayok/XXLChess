@@ -15,8 +15,8 @@ public class App extends PApplet {
   public static final int SIDEBAR = 120;
   public static final int BOARD_WIDTH = 14;
 
-  public static int WIDTH = CELLSIZE * BOARD_WIDTH + SIDEBAR;
-  public static int HEIGHT = BOARD_WIDTH * CELLSIZE;
+  public static final int WIDTH = CELLSIZE * BOARD_WIDTH + SIDEBAR;
+  public static final int HEIGHT = BOARD_WIDTH * CELLSIZE;
 
   public static final int FPS = 60;
 
@@ -70,7 +70,7 @@ public class App extends PApplet {
    * Receive key pressed signal from the keyboard.
    */
   public void keyPressed() {
-    if (key == 'r') {
+    if (key == 'r' && game.isOver()) {
       textBox.hide();
       this.player1 = new Player();
       this.player2 = new Player();
@@ -81,32 +81,22 @@ public class App extends PApplet {
     }
   }
 
-  /**
-   * Receive key released signal from the keyboard.
-   */
-  public void keyReleased() {}
 
   @Override
   public void mousePressed(MouseEvent e) {
     game.mouseClicked(e.getX(), e.getY());
   }
 
-  @Override
-  public void mouseDragged(MouseEvent e) {}
-
   /**
    * Draw all elements in the game by current frame.
    */
   public void draw() {
-    // background(155);
     fill(155);
     stroke(155);
     rect(672, 0, 150, 800);
     game.tick(this);
   }
 
-  // Add any additional methods or attributes you want. Please put classes in
-  // different files.
   public void updateGameStatus(int status) {
     game.updateGameStatus(status);
   }

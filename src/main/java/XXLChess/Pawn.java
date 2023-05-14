@@ -29,9 +29,4 @@ public class Pawn extends Piece {
       }
     }
   }
-
-  public void promoteToQueen() {
-    this.code = Character.toString(this.code.charAt(0)) + "q";
-    this.value = (isWhite ? 1 : -1) * 9.5;
-  }
 }

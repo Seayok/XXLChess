@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Player.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">chess_origin copy</a> &gt; <a href="index.source.html" class="el_package">XXLChess</a> &gt; <span class="el_source">Player.java</span></div><h1>Player.java</h1><pre class="source lang-java linenums">package XXLChess;
+
+import java.util.List;
+import java.util.Random;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import processing.data.JSONObject;
+
+/**
+ * Class representing a player.
+ */
+<span class="fc" id="L12">public class Player {</span>
+  private boolean isWhite;
+  private boolean isBot;
+  private Board curBoard;
+  private Move moveToPlay;
+  private boolean calculating;
+  private int depth;
+  private Clock clock;
+
+  public void setupSide(boolean isWhite, boolean isBot) {
+<span class="fc" id="L22">    this.isWhite = isWhite;</span>
+<span class="fc" id="L23">    this.isBot = isBot;</span>
+<span class="fc" id="L24">  }</span>
+
+
+  public boolean isBot() {
+<span class="fc" id="L28">    return isBot;</span>
+  }
+
+  public boolean isWhite() {
+<span class="fc" id="L32">    return isWhite;</span>
+  }
+
+  public Clock getClock() {
+<span class="fc" id="L36">    return clock;</span>
+  }
+
+  public void setDepth(int depth) {
+<span class="fc" id="L40">    this.depth = depth;</span>
+<span class="fc" id="L41">  }</span>
+
+  public boolean isCalculating() {
+<span class="fc" id="L44">    return calculating;</span>
+  }
+
+  /**
+   * Set up clock for each player.
+   *
+   * @param playertime the settings information from the config file.
+   */
+  public void setUpClock(JSONObject playertime) {
+<span class="fc bfc" id="L53" title="All 2 branches covered.">    float clockY = isBot ? 56 : 634;</span>
+<span class="fc" id="L54">    float clockX = 690;</span>
+<span class="fc" id="L55">    clock = new Clock(clockX, clockY);</span>
+<span class="fc" id="L56">    clock.setConfig(playertime.getInt(&quot;seconds&quot;), playertime.getInt(&quot;increment&quot;));</span>
+<span class="fc" id="L57">  }</span>
+
+
+  /**
+   * Start calculating the move after 1 second of switching turns.
+   *
+   * @param curBoard the board on which players are playing.
+   * @return the move state: 0 is not finished calculating, 1 is finished calculating and made the
+   *         move.
+   */
+  public int guessMove(Board curBoard) {
+<span class="fc bfc" id="L68" title="All 2 branches covered.">    if (!calculating) {</span>
+<span class="fc" id="L69">      this.curBoard = curBoard;</span>
+<span class="fc" id="L70">      calculating = true;</span>
+<span class="fc" id="L71">      calculateMove();</span>
+<span class="fc" id="L72">      return 0;</span>
+<span class="fc bfc" id="L73" title="All 2 branches covered.">    } else if (this.moveToPlay == null) {</span>
+<span class="fc" id="L74">      return 0;</span>
+    } else {
+<span class="fc" id="L76">      curBoard.makeMove(moveToPlay, true, false);</span>
+<span class="fc" id="L77">      this.curBoard = null;</span>
+<span class="fc" id="L78">      this.calculating = false;</span>
+<span class="fc" id="L79">      this.moveToPlay = null;</span>
+<span class="fc" id="L80">      return 2;</span>
+    }
+  }
+
+  /**
+   * Start to calculate and get the best move within the depth.
+   */
+  public void calculateMove() {
+<span class="fc" id="L88">    Runnable job = new CalculateMove();</span>
+<span class="fc" id="L89">    ExecutorService executor = Executors.newSingleThreadExecutor();</span>
+<span class="fc" id="L90">    executor.execute(job);</span>
+
+<span class="fc" id="L92">    executor.shutdown();</span>
+<span class="fc" id="L93">  }</span>
+
+<span class="fc" id="L95">  private class CalculateMove implements Runnable {</span>
+    public void run() {
+<span class="fc" id="L97">      Random generator = new Random();</span>
+<span class="fc" id="L98">      List&lt;Move&gt; moveList = curBoard.getAllMoves(isWhite, true);</span>
+<span class="fc" id="L99">      Move resMove = null;</span>
+<span class="fc bfc" id="L100" title="All 2 branches covered.">      double miniMax = isWhite ? -Double.POSITIVE_INFINITY : Double.POSITIVE_INFINITY;</span>
+<span class="fc" id="L101">      double alpha = -Double.POSITIVE_INFINITY;</span>
+<span class="fc" id="L102">      double beta = Double.POSITIVE_INFINITY;</span>
+<span class="fc bfc" id="L103" title="All 2 branches covered.">      for (Move move : moveList) {</span>
+<span class="fc bfc" id="L104" title="All 2 branches covered.">        double moveScore = curBoard.evaluateMove(move, depth, alpha, beta, !isWhite);</span>
+<span class="fc bfc" id="L105" title="All 8 branches covered.">        if ((isWhite &amp;&amp; moveScore &gt; miniMax) || (!isWhite &amp;&amp; moveScore &lt; miniMax)) {</span>
+<span class="fc" id="L106">          resMove = move;</span>
+<span class="fc" id="L107">          miniMax = moveScore;</span>
+        }
+<span class="fc bfc" id="L109" title="All 2 branches covered.">        if (moveScore == miniMax) {</span>
+<span class="fc bfc" id="L110" title="All 4 branches covered.">          if (resMove == null || generator.nextInt(2) == 1) {</span>
+<span class="fc" id="L111">            resMove = move;</span>
+          }
+        }
+
+<span class="fc" id="L115">      }</span>
+<span class="fc bfc" id="L116" title="All 2 branches covered.">      if (Math.abs(miniMax) == Double.POSITIVE_INFINITY) {</span>
+<span class="fc" id="L117">        depth--;</span>
+      }
+<span class="fc" id="L119">      moveToPlay = resMove;</span>
+<span class="fc" id="L120">    }</span>
+  }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span></div></body></html>

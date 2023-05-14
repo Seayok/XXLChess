@@ -12,7 +12,6 @@ import processing.core.PImage;
 public abstract class Piece extends GameObject {
   public static final int GRIDNUM = Board.GRIDNUM;
   public static final int GRIDSIZE = Board.GRIDSIZE;
-  public static final int FPS = 60;
   public static final int DIRECTION_NUMBER = 4;
   public static final int HORSE_RANGE = 2;
   public static final int CAMEL_RANGE = 3;
@@ -20,6 +19,7 @@ public abstract class Piece extends GameObject {
   public static final int[] X_STRAIGHT_DIRECTION = {0, 1, 0, -1};
   public static final int[] Y_DIAGONAL_DIRECTION = {-1, -1, 1, 1};
   public static final int[] X_DIAGONAL_DIRECTION = {1, -1, -1, 1};
+  public static int movingPieces;
 
   protected static PImage blackQueenImage;
   protected static PImage whiteQueenImage;
@@ -38,11 +38,10 @@ public abstract class Piece extends GameObject {
   protected double direction;
   protected String code;
   protected Piece pinPiece;
-  protected boolean moving;
   protected double value;
   protected PImage sprite;
-  protected CopyOnWriteArrayList<Move> validMoves = new CopyOnWriteArrayList<Move>();
-  protected CopyOnWriteArrayList<Move> preLegalMoves = new CopyOnWriteArrayList<Move>();
+  protected CopyOnWriteArrayList<Move> validMoves;
+  protected CopyOnWriteArrayList<Move> preLegalMoves;
   protected boolean isWhite;
 
 
@@ -55,7 +54,10 @@ public abstract class Piece extends GameObject {
    * @param curSquare the square which the piece belongs to initially.
    */
   public Piece(float x, float y, String code, Square curSquare) {
+
     super(x, y);
+    preLegalMoves = new CopyOnWriteArrayList<Move>();
+    validMoves = new CopyOnWriteArrayList<Move>();
     this.curSquare = curSquare;
     destX = x;
     destY = y;
@@ -105,13 +107,16 @@ public abstract class Piece extends GameObject {
    * Set the destination for the piece to move to.
    */
   public void startMoving() {
+    movingPieces++;
     displayX = destX;
     displayY = destY;
     this.direction = Math.atan2(destY - cordY, destX - cordX);
+
     double distance = Math.sqrt(Math.pow(displayX - cordX, 2) + Math.pow(displayY - cordY, 2));
     double time = distance / Piece.movementSpeed;
-    if (time >= movementTime * FPS - 1) {
-      overrideSpeed = distance / ((movementTime * FPS) - 1);
+
+    if (time >= movementTime * App.FPS - 1) {
+      overrideSpeed = distance / ((movementTime * App.FPS) - 1);
     }
 
   }
@@ -124,10 +129,12 @@ public abstract class Piece extends GameObject {
   public void displayMoveSet() {
     for (Move m : validMoves) {
       Square s = m.getEndSquare();
+
       if (m.getFlag() == Move.CASTLE || m.isPromotion()
           || (code.contains("p") && Math.abs(s.getY() - destY) > GRIDSIZE)) {
         s.setSpecial(true);
       }
+
       if (m.getFlag() == Move.CAPTURE) {
         s.setOnCapture(true);
       } else {
@@ -143,26 +150,32 @@ public abstract class Piece extends GameObject {
     Piece prevPiece = this;
     CopyOnWriteArrayList<Piece> attackers = curBoard.getAttackers(!isWhite);
     Square[][] squares = curBoard.getSquareMat();
+
     for (int i = 1; i <= range; i++) {
       int changeX = i * dirX;
       int changeY = i * dirY;
       int resX = (int) destX / GRIDSIZE + changeX;
       int resY = (int) destY / GRIDSIZE + changeY;
+
       if (resX >= 0 && resX < GRIDNUM && (changeX != 0 || changeY != 0) && resY >= 0
           && resY < GRIDNUM) {
         Square s = squares[resX][resY];
         Piece destPiece = s.getPiece();
+
         if (destPiece == null) {
           if (!(this.code.contains("p") && dirX != 0) && occur - kingOccur == 0) {
             preLegalMoves.add(new Move(curSquare, s, Move.NORMAL, this, null));
             s.underControl(isWhite);
           }
         } else {
+
           if (kingOccur > 0) {
             break;
           }
+
           if (destPiece.isWhitePiece() != this.isWhite) {
             if (!(this.code.contains("p") && dirX == 0)) {
+
               if (destPiece.getCode().contains("k")) {
                 if (occur == 0) {
                   attackers.add(this);
@@ -171,12 +184,15 @@ public abstract class Piece extends GameObject {
                 }
                 kingOccur++;
               }
+
               prevPiece = destPiece;
               occur++;
+
               if (occur <= 1) {
                 preLegalMoves.add(new Move(curSquare, s, Move.CAPTURE, this, destPiece));
                 s.underControl(isWhite);
               }
+
             } else {
               break;
             }
@@ -197,10 +213,13 @@ public abstract class Piece extends GameObject {
     Square[][] squares = curBoard.getSquareMat();
     List<Integer> changeX = Arrays.asList(1, range);
     List<Integer> changeY = Arrays.asList(range, 1);
+
     for (int i = 0; i < DIRECTION_NUMBER; i++) {
       for (int j = 0; j < changeX.size(); j++) {
+
         int resX = (int) destX / GRIDSIZE + X_DIAGONAL_DIRECTION[i] * changeX.get(j);
         int resY = (int) destY / GRIDSIZE + Y_DIAGONAL_DIRECTION[i] * changeY.get(j);
+
         if (resX >= 0 && resX < GRIDNUM && resY >= 0 && resY < GRIDNUM) {
           Square s = squares[resX][resY];
           Piece destPiece = s.getPiece();
@@ -342,6 +361,30 @@ public abstract class Piece extends GameObject {
     return null;
   }
 
+  /**
+   * Animations for the moving piece.
+   */
+  public void tick() {
+    if (displayX != cordX || displayY != cordY) {
+      double movementSpeed = Piece.movementSpeed;
+      if (overrideSpeed > 0) {
+        movementSpeed = overrideSpeed;
+      }
+      float distX = cordX - displayX;
+      float distY = cordY - displayY;
+      double distance = Math.sqrt(Math.pow(distX, 2) + Math.pow(distY, 2));
+      if (distance > movementSpeed) {
+        cordX += Math.cos(direction) * movementSpeed;
+        cordY += Math.sin(direction) * movementSpeed;
+      } else {
+        cordX = this.destX;
+        cordY = this.destY;
+        overrideSpeed = 0;
+        movingPieces--;
+      }
+    }
+  }
+
   public void setPinPiece(Piece pin) {
     pinPiece = pin;
   }
@@ -395,28 +438,14 @@ public abstract class Piece extends GameObject {
     return value;
   }
 
-  /**
-   * Draws the object to the screen.
-   *
-   * @param app The window to draw onto.
-   */
+  public double getOverrideSpeed() {
+    return overrideSpeed;
+  }
+
+
+  @Override
   public void draw(PApplet app) {
-    double movementSpeed = Piece.movementSpeed;
-    if (overrideSpeed > 0) {
-      movementSpeed = overrideSpeed;
-    }
-    float distX = cordX - displayX;
-    float distY = cordY - displayY;
-    double distance = Math.sqrt(Math.pow(distX, 2) + Math.pow(distY, 2));
-    if (distance > movementSpeed) {
-      cordX += Math.cos(direction) * movementSpeed;
-      cordY += Math.sin(direction) * movementSpeed;
-    } else {
-      cordX = this.destX;
-      cordY = this.destY;
-      overrideSpeed = 0;
-      moving = false;
-    }
+    tick();
     app.image(this.sprite, cordX, cordY);
   }
 }

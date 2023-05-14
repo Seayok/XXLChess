@@ -1,0 +1,663 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Board.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">chess_origin copy</a> &gt; <a href="index.source.html" class="el_package">XXLChess</a> &gt; <span class="el_source">Board.java</span></div><h1>Board.java</h1><pre class="source lang-java linenums">package XXLChess;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
+import processing.core.PApplet;
+
+/**
+ * Represents a board.
+ */
+public class Board extends GameObject {
+<span class="fc" id="L13">  public static final int[] PIECE_SQUARE_TABLE = {-20, -15, -10, -10, -10, -5, -5, -5, -5, -10, -10,</span>
+      -10, -15, -20, -10, -5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -5, -10, -10, 0, 0, 0, 5, 5, 5, 5, 5, 5,
+      0, 0, 0, -10, -5, 0, 0, 0, 5, 5, 5, 5, 5, 5, 0, 0, 0, -5, 0, 0, 0, 5, 10, 10, 10, 10, 10, 10,
+      5, 0, 0, 0, 0, 0, 5, 10, 10, 15, 15, 15, 15, 10, 10, 5, 0, 0, 0, 5, 10, 10, 15, 15, 20, 20,
+      15, 15, 10, 10, 5, 0, 0, 5, 10, 10, 15, 15, 20, 20, 15, 15, 10, 10, 5, 0, 0, 0, 5, 10, 10, 15,
+      15, 15, 15, 10, 10, 5, 0, 0, 0, 0, 0, 5, 10, 10, 10, 10, 10, 10, 5, 0, 0, 0, -5, 0, 0, 0, 5,
+      5, 5, 5, 5, 5, 0, 0, 0, -5, -10, 0, 0, 0, 5, 5, 5, 5, 5, 5, 0, 0, 0, -10, -10, -5, 0, 0, 0, 0,
+      0, 0, 0, 0, 0, 0, -5, -10, -20, -15, -10, -10, -10, -5, -5, -5, -5, -10, -10, -10, -15, -20};
+  public static final int GRIDSIZE = 48;
+  public static final int GRIDNUM = 14;
+
+<span class="fc" id="L24">  private boolean whiteTurn = true;</span>
+  private Piece[] king;
+  private CopyOnWriteArrayList&lt;Piece&gt; whiteAttackers;
+  private CopyOnWriteArrayList&lt;Piece&gt; blackAttackers;
+  private Piece selPiece;
+  private HashMap&lt;Character, CreatePiece&gt; createOperations;
+  private CopyOnWriteArrayList&lt;Piece&gt; pieceList;
+  private Square[][] squareMat;
+
+  /**
+   * Constructor for creating a new board.
+   *
+   * @param levelArr is a matrix containing the code of piece in a matrix extracted from the config
+   *        file.
+   * @param app is the applicaiton we are running on.
+   */
+  public Board(String[][] levelArr, PApplet app) {
+<span class="fc" id="L41">    super(0, 0);</span>
+
+<span class="fc" id="L43">    squareMat = new Square[GRIDNUM][GRIDNUM];</span>
+<span class="fc" id="L44">    king = new Piece[2];</span>
+<span class="fc" id="L45">    whiteAttackers = new CopyOnWriteArrayList&lt;&gt;();</span>
+<span class="fc" id="L46">    blackAttackers = new CopyOnWriteArrayList&lt;&gt;();</span>
+<span class="fc" id="L47">    pieceList = new CopyOnWriteArrayList&lt;&gt;();</span>
+<span class="fc" id="L48">    createOperations = new HashMap&lt;&gt;();</span>
+<span class="fc" id="L49">    createOperations.put('p', (x, y, code, square) -&gt; new Pawn(x, y, code, square));</span>
+<span class="fc" id="L50">    createOperations.put('n', (x, y, code, square) -&gt; new Knight(x, y, code, square));</span>
+<span class="fc" id="L51">    createOperations.put('g', (x, y, code, square) -&gt; new Guard(x, y, code, square));</span>
+<span class="fc" id="L52">    createOperations.put('e', (x, y, code, square) -&gt; new Chancellor(x, y, code, square));</span>
+<span class="fc" id="L53">    createOperations.put('k', (x, y, code, square) -&gt; new King(x, y, code, square));</span>
+<span class="fc" id="L54">    createOperations.put('q', (x, y, code, square) -&gt; new Queen(x, y, code, square));</span>
+<span class="fc" id="L55">    createOperations.put('c', (x, y, code, square) -&gt; new Camel(x, y, code, square));</span>
+<span class="fc" id="L56">    createOperations.put('a', (x, y, code, square) -&gt; new Amazon(x, y, code, square));</span>
+<span class="fc" id="L57">    createOperations.put('h', (x, y, code, square) -&gt; new Archbishop(x, y, code, square));</span>
+<span class="fc" id="L58">    createOperations.put('r', (x, y, code, square) -&gt; new Rook(x, y, code, square));</span>
+<span class="fc" id="L59">    createOperations.put('b', (x, y, code, square) -&gt; new Bishop(x, y, code, square));</span>
+
+
+<span class="fc bfc" id="L62" title="All 2 branches covered.">    for (int i = 0; i &lt; GRIDNUM; i++) {</span>
+<span class="fc bfc" id="L63" title="All 2 branches covered.">      for (int j = 0; j &lt; GRIDNUM; j++) {</span>
+<span class="fc" id="L64">        squareMat[i][j] = new Square(i, j, app);</span>
+<span class="fc bfc" id="L65" title="All 2 branches covered.">        if (!levelArr[j][i].equals(&quot; &quot;)) {</span>
+<span class="fc" id="L66">          Piece newPiece = createOperations.get(levelArr[j][i].charAt(1)).makeNewPiece(i * GRIDSIZE,</span>
+              j * GRIDSIZE, levelArr[j][i], squareMat[i][j]);
+<span class="fc" id="L68">          pieceList.add(newPiece);</span>
+<span class="fc" id="L69">          squareMat[i][j].setPiece(newPiece);</span>
+<span class="fc bfc" id="L70" title="All 2 branches covered.">          if (levelArr[j][i].charAt(1) == 'k') {</span>
+<span class="fc bfc" id="L71" title="All 2 branches covered.">            king[levelArr[j][i].charAt(0) == 'w' ? 1 : 0] = newPiece;</span>
+          }
+        }
+      }
+    }
+<span class="fc" id="L76">    newMoveSet();</span>
+<span class="fc" id="L77">  }</span>
+
+  /**
+   * Set image for all pieces and draw them.
+   *
+   * @param app is our main application.
+   */
+  public void setSpriteAndDisplay(PApplet app) {
+<span class="nc bnc" id="L85" title="All 2 branches missed.">    for (Piece piece : pieceList) {</span>
+<span class="nc" id="L86">      piece.setSprite(app);</span>
+<span class="nc" id="L87">    }</span>
+<span class="nc" id="L88">    draw(app);</span>
+<span class="nc" id="L89">  }</span>
+
+  /**
+   * Process information of the clicks when there is no selected pieces.
+   *
+   * @param x is the x coordinate of the click.
+   * @param y is the y coordinate of the click.
+   * @return 1 when successully selected a piece, 0 otherwise.
+   */
+  public int startClick(int x, int y) {
+<span class="fc bfc" id="L99" title="All 2 branches covered.">    if (squareMat[x / GRIDSIZE][y / GRIDSIZE].getPiece() == null) {</span>
+<span class="fc" id="L100">      return 0;</span>
+    }
+<span class="fc" id="L102">    Square selSquare = squareMat[x / GRIDSIZE][y / GRIDSIZE];</span>
+<span class="fc" id="L103">    selPiece = selSquare.getPiece();</span>
+<span class="fc bfc" id="L104" title="All 2 branches covered.">    if (selPiece.isWhitePiece() != whiteTurn) {</span>
+<span class="fc" id="L105">      selSquare = null;</span>
+<span class="fc" id="L106">      selPiece = null;</span>
+<span class="fc" id="L107">      return 0;</span>
+    }
+<span class="fc" id="L109">    selSquare.onSelected();</span>
+<span class="fc" id="L110">    selPiece.displayMoveSet();</span>
+<span class="fc" id="L111">    return 1;</span>
+  }
+
+  /**
+   * Process information of the clicks when there is a selected pieces.
+   *
+   * @param x is the x coordinate of the click.
+   * @param y is the y coordinate of the click.
+   * @return 0 when reseting the selected piece, 2 if succesfully move a piece, 3 if make a legal
+   *         move that not protect the king when it is in check
+   */
+  public int selectClick(int x, int y) {
+<span class="fc" id="L123">    Square target = squareMat[x / GRIDSIZE][y / GRIDSIZE];</span>
+<span class="fc bfc" id="L124" title="All 4 branches covered.">    if (!target.isOnPieceWay() &amp;&amp; !target.isOnCaptured()) {</span>
+<span class="fc bfc" id="L125" title="All 2 branches covered.">      Square kingSquare = king[whiteTurn ? 1 : 0].getSquare();</span>
+<span class="pc bpc" id="L126" title="1 of 4 branches missed.">      if (kingSquare.isKingChecked() &amp;&amp; selPiece.getMoveFromSquare(target, false) != null) {</span>
+<span class="pc bpc" id="L127" title="1 of 2 branches missed.">        king[whiteTurn ? 1 : 0].getSquare().setWarning();</span>
+<span class="fc" id="L128">        return 3;</span>
+      }
+<span class="fc" id="L130">      resetSquares(selPiece.getSquare(), null);</span>
+<span class="pc bpc" id="L131" title="1 of 2 branches missed.">      if (target.getPiece() != null) {</span>
+<span class="fc" id="L132">        return startClick(x, y);</span>
+      }
+<span class="nc" id="L134">      return 0;</span>
+    } else {
+<span class="fc" id="L136">      makeMove(selPiece.getMoveFromSquare(target, true), true, false);</span>
+<span class="fc" id="L137">      return 2;</span>
+    }
+  }
+
+  /**
+   * Make a move.
+   *
+   * @param move is the move to execute.
+   * @param display is the flag indicating whether the change to the board will display or not(not
+   *        display is for AI computing moves).
+   * @param submove indicates whether the move is the submove.
+   */
+  public void makeMove(Move move, boolean display, boolean submove) {
+
+<span class="fc" id="L151">    Piece movePiece = move.getSourcePiece();</span>
+<span class="fc" id="L152">    final Square target = move.getEndSquare();</span>
+<span class="fc" id="L153">    final Square start = move.getStartSquare();</span>
+
+<span class="fc bfc" id="L155" title="All 2 branches covered.">    if (move.getFlag() == Move.CASTLE) {</span>
+<span class="fc" id="L156">      makeMove(move.getSubMove(), display, true);</span>
+    }
+
+<span class="fc bfc" id="L159" title="All 2 branches covered.">    if (move.isPromotion()) {</span>
+<span class="fc" id="L160">      pieceList.remove(movePiece);</span>
+<span class="fc" id="L161">      movePiece = new Queen(movePiece.getDesX(), movePiece.getDesY(),</span>
+<span class="fc" id="L162">          Character.toString(movePiece.getCode().charAt(0)) + &quot;q&quot;, start);</span>
+<span class="fc" id="L163">      move.setPromotedPiece(movePiece);</span>
+<span class="fc" id="L164">      pieceList.add(movePiece);</span>
+    }
+
+<span class="fc bfc" id="L167" title="All 2 branches covered.">    if (move.getFlag() == Move.CAPTURE) {</span>
+<span class="fc" id="L168">      pieceList.remove(move.getDestinationPiece());</span>
+    }
+
+<span class="fc" id="L171">    target.setPiece(movePiece);</span>
+<span class="fc" id="L172">    start.setPiece(null);</span>
+<span class="fc" id="L173">    movePiece.setDestination(target);</span>
+
+<span class="fc bfc" id="L175" title="All 2 branches covered.">    if (display) {</span>
+<span class="fc" id="L176">      movePiece.startMoving();</span>
+<span class="fc bfc" id="L177" title="All 2 branches covered.">      if (move.isPromotion()) {</span>
+<span class="nc" id="L178">        movePiece.setPromotedSprite();</span>
+      }
+<span class="fc" id="L180">      resetSquares(move.getStartSquare(), move.getEndSquare());</span>
+    }
+
+<span class="fc" id="L183">    movePiece.setMoved(true);</span>
+
+<span class="fc bfc" id="L185" title="All 2 branches covered.">    if (!submove) {</span>
+<span class="fc bfc" id="L186" title="All 2 branches covered.">      whiteTurn = !whiteTurn;</span>
+<span class="fc" id="L187">      newMoveSet();</span>
+    }
+<span class="fc" id="L189">  }</span>
+
+  /**
+   * Get the all legal moves from one side.
+   *
+   * @param isWhite indicates whether the move is from white side or black side.
+   * @param order indicates whether we have the move in order of the move score(for AI alpha beta
+   *        pruning purpose).
+   * @return a list of all legal moves satisfying the parameters.
+   */
+  public List&lt;Move&gt; getAllMoves(boolean isWhite, boolean order) {
+<span class="fc" id="L200">    List&lt;Move&gt; result = new ArrayList&lt;&gt;();</span>
+<span class="fc bfc" id="L201" title="All 2 branches covered.">    for (Piece p : pieceList) {</span>
+<span class="fc bfc" id="L202" title="All 2 branches covered.">      if (p.isWhitePiece() == isWhite) {</span>
+<span class="fc" id="L203">        result.addAll(p.getValidMoves());</span>
+      }
+<span class="fc" id="L205">    }</span>
+<span class="fc bfc" id="L206" title="All 2 branches covered.">    if (order) {</span>
+<span class="fc bfc" id="L207" title="All 2 branches covered.">      for (Move move : result) {</span>
+<span class="fc" id="L208">        Piece sourcePiece = move.getSourcePiece();</span>
+<span class="fc" id="L209">        double moveScore = 0;</span>
+<span class="fc bfc" id="L210" title="All 2 branches covered.">        if (move.getFlag() == Move.CAPTURE) {</span>
+<span class="fc" id="L211">          moveScore = 8 * Math.abs(move.getDestinationPiece().getValue())</span>
+<span class="fc" id="L212">              - Math.abs(sourcePiece.getValue());</span>
+        }
+<span class="fc bfc" id="L214" title="All 2 branches covered.">        if (move.isPromotion()) {</span>
+<span class="fc" id="L215">          moveScore += 9;</span>
+        }
+<span class="fc bfc" id="L217" title="All 6 branches covered.">        if (move.getEndSquare().isControl(!whiteTurn) &amp;&amp; move.getFlag() != Move.CAPTURE) {</span>
+<span class="fc" id="L218">          moveScore -= Math.abs(sourcePiece.getValue());</span>
+        }
+<span class="fc" id="L220">        move.setScore(moveScore);</span>
+<span class="fc" id="L221">      }</span>
+<span class="fc" id="L222">      result.sort((a, b) -&gt; Double.compare(b.getScore(), a.getScore()));</span>
+    }
+<span class="fc" id="L224">    return result;</span>
+  }
+
+  /**
+   * Check if the current king of one side is being check.
+   *
+   * @return true if the current king is being check or false otherwise.
+   */
+  public boolean checkCheck() {
+<span class="fc bfc" id="L233" title="All 4 branches covered.">    boolean check = (whiteTurn ? whiteAttackers : blackAttackers).size() &gt; 0;</span>
+<span class="fc bfc" id="L234" title="All 2 branches covered.">    king[whiteTurn ? 1 : 0].getSquare().setKingChecked(check);</span>
+<span class="fc" id="L235">    return check;</span>
+  }
+
+  public boolean checkCheckMate() {
+<span class="fc bfc" id="L239" title="All 2 branches covered.">    return getAllMoves(whiteTurn, false).size() == 0;</span>
+  }
+
+  /**
+   * Check if one square is on the same line with other squares.
+   *
+   * @param start is the starting square.
+   * @param end is the ending square.
+   * @param check is the square being checked if it is on the same line with start square and end
+   *        square.
+   * @return true if 3 squares in on the same line, false otherwise.
+   */
+  public static boolean checkOnWay(Square start, Square end, Square check) {
+<span class="fc" id="L252">    double firstDistance = distanceBetweenTwoSquares(start, end);</span>
+<span class="fc" id="L253">    double secondDistance = distanceBetweenTwoSquares(start, check);</span>
+<span class="fc" id="L254">    double thirdDistance = distanceBetweenTwoSquares(end, check);</span>
+<span class="fc bfc" id="L255" title="All 2 branches covered.">    return firstDistance == secondDistance + thirdDistance;</span>
+  }
+
+  /**
+   * After a checkmate, this function is called to display all the pieces contributed to the
+   * checkmate.
+   */
+  public void displayCheckMatePiece() {
+<span class="fc" id="L263">    List&lt;Square&gt; occupiedSquare = new ArrayList&lt;&gt;();</span>
+<span class="pc bpc" id="L264" title="1 of 2 branches missed.">    Piece kingPiece = king[whiteTurn ? 1 : 0];</span>
+<span class="fc" id="L265">    List&lt;Move&gt; kingMoves = new ArrayList&lt;&gt;(kingPiece.getPreLegalMoves());</span>
+<span class="fc" id="L266">    Square kingSquare = kingPiece.getSquare();</span>
+
+<span class="fc" id="L268">    kingMoves.add(new Move(kingPiece.getSquare(), kingSquare, Move.NORMAL, kingPiece, null));</span>
+<span class="fc" id="L269">    kingSquare.setPiece(null);</span>
+
+<span class="fc bfc" id="L271" title="All 2 branches covered.">    for (Move m : kingMoves) {</span>
+<span class="fc" id="L272">      Square s = m.getEndSquare();</span>
+<span class="fc" id="L273">      Piece p = pieceAttackSquare(whiteTurn, s);</span>
+
+<span class="fc bfc" id="L275" title="All 2 branches covered.">      if (p == null) {</span>
+<span class="fc" id="L276">        final Piece prevPiece = s.getPiece();</span>
+<span class="fc" id="L277">        s.setPiece(null);</span>
+<span class="fc" id="L278">        newMoveSet();</span>
+<span class="fc" id="L279">        p = pieceAttackSquare(whiteTurn, s);</span>
+<span class="fc" id="L280">        s.setPiece(prevPiece);</span>
+<span class="fc" id="L281">        newMoveSet();</span>
+      }
+
+<span class="fc" id="L284">      occupiedSquare.add(p.getSquare());</span>
+<span class="fc" id="L285">    }</span>
+
+<span class="fc bfc" id="L287" title="All 2 branches covered.">    for (Square s : occupiedSquare) {</span>
+<span class="fc" id="L288">      s.setOnCapture(true);</span>
+<span class="fc" id="L289">    }</span>
+<span class="fc" id="L290">  }</span>
+
+  /**
+   * Function to reset the color of the square and all the atributes related to the current state of
+   * the board.
+   *
+   * @param prevSquare is the move selected previously.
+   * @param target is the square(if not null) that the piece will move to.
+   */
+  public void resetSquares(Square prevSquare, Square target) {
+<span class="fc bfc" id="L300" title="All 2 branches covered.">    for (int i = 0; i &lt; GRIDNUM; i++) {</span>
+<span class="fc bfc" id="L301" title="All 2 branches covered.">      for (int j = 0; j &lt; GRIDNUM; j++) {</span>
+
+<span class="fc" id="L303">        Square square = squareMat[i][j];</span>
+<span class="fc" id="L304">        square.setOnPieceWay(false);</span>
+<span class="fc" id="L305">        square.setOnCapture(false);</span>
+<span class="fc" id="L306">        square.setSpecial(false);</span>
+
+<span class="fc bfc" id="L308" title="All 2 branches covered.">        if (target != null) {</span>
+<span class="fc" id="L309">          square.setPrevMove(false);</span>
+<span class="fc" id="L310">          square.unWarning();</span>
+<span class="fc" id="L311">          square.setKingChecked(false);</span>
+        }
+
+      }
+    }
+
+<span class="fc bfc" id="L317" title="All 2 branches covered.">    if (target != null) {</span>
+<span class="fc" id="L318">      prevSquare.setPrevMove(true);</span>
+<span class="fc" id="L319">      target.setPrevMove(true);</span>
+    }
+
+<span class="fc" id="L322">    prevSquare.deselect();</span>
+<span class="fc" id="L323">    selPiece = null;</span>
+<span class="fc" id="L324">  }</span>
+
+  /**
+   * Get the piece which attacks a particular square.
+   *
+   * @param isWhite is the side of piece attacking.
+   * @param target is the square we wish to get the piece attacking this square.
+   * @return the piece which attacks this square, or null if otherwise.
+   */
+  public Piece pieceAttackSquare(boolean isWhite, Square target) {
+<span class="fc bfc" id="L334" title="All 2 branches covered.">    for (Piece p : pieceList) {</span>
+<span class="fc bfc" id="L335" title="All 2 branches covered.">      if (p.isWhitePiece() != isWhite) {</span>
+<span class="fc bfc" id="L336" title="All 2 branches covered.">        if (p.getMoveFromSquare(target, false) != null) {</span>
+<span class="fc" id="L337">          return p;</span>
+        }
+      }
+<span class="fc" id="L340">    }</span>
+<span class="fc" id="L341">    return null;</span>
+  }
+
+  /**
+   * Function to return values for the evaluate function that encourage AI to make the opponent king
+   * to edge for easier checkmate.
+   *
+   * @return values for the evaluate function.
+   */
+  public double forceKingToEdge() {
+<span class="fc" id="L351">    double eval = 0;</span>
+
+<span class="fc bfc" id="L353" title="All 2 branches covered.">    Piece theirKing = king[whiteTurn ? 1 : 0];</span>
+<span class="fc bfc" id="L354" title="All 2 branches covered.">    Piece ourKing = king[whiteTurn ? 0 : 1];</span>
+
+<span class="fc" id="L356">    double dstxToCenter =</span>
+<span class="fc" id="L357">        Math.max((theirKing.getDesX() / GRIDSIZE) - 6, 7 - (theirKing.getDesX() / GRIDSIZE));</span>
+<span class="fc" id="L358">    double dstyToCenter =</span>
+<span class="fc" id="L359">        Math.max((theirKing.getDesY() / GRIDSIZE) - 6, 7 - (theirKing.getDesY() / GRIDSIZE));</span>
+
+<span class="fc" id="L361">    double dstxToOpponent = Math.abs(ourKing.getDesX() - theirKing.getDesX()) / GRIDSIZE;</span>
+<span class="fc" id="L362">    double dstyToOpponent = Math.abs(ourKing.getDesY() - theirKing.getDesY()) / GRIDSIZE;</span>
+
+<span class="fc" id="L364">    eval += dstxToCenter + dstyToCenter;</span>
+<span class="fc" id="L365">    eval += (26 - dstxToOpponent - dstyToOpponent) / 260;</span>
+
+<span class="fc" id="L367">    return eval * (56 - pieceList.size()) / 600;</span>
+  }
+
+  /**
+   * Evaluates the current state of the board by various factors: position of pieces, position of
+   * kings, pieces value.
+   *
+   * @return the evaluted score of the current state of the board, negative if black has an
+   *         advantage, positive if white has an advantage, 0 if black and white are equal.
+   */
+  public double evaluateBoard() {
+<span class="fc" id="L378">    double res = 0;</span>
+<span class="fc bfc" id="L379" title="All 2 branches covered.">    for (Piece p : pieceList) {</span>
+
+<span class="fc" id="L381">      res += p.getValue();</span>
+
+<span class="fc bfc" id="L383" title="All 2 branches covered.">      if (pieceList.size() &gt; 10) {</span>
+<span class="fc bfc" id="L384" title="All 2 branches covered.">        if (!p.getCode().contains(&quot;k&quot;)) {</span>
+<span class="fc bfc" id="L385" title="All 2 branches covered.">          double pawnWeight = (p.getCode().contains(&quot;p&quot;) ? 3 : 1);</span>
+<span class="fc" id="L386">          double offset = (PIECE_SQUARE_TABLE[(int) p.getDesX() / GRIDSIZE</span>
+<span class="fc bfc" id="L387" title="All 2 branches covered.">              + 14 * (int) (p.getDesY() / GRIDSIZE)] * (p.isWhitePiece() ? 1 : -1)</span>
+<span class="fc" id="L388">              * pieceList.size() * pawnWeight) / 1000;</span>
+
+<span class="fc" id="L390">          res += offset;</span>
+<span class="fc" id="L391">        } else {</span>
+
+<span class="fc bfc" id="L393" title="All 2 branches covered.">          if (p.isMoved()) {</span>
+<span class="fc bfc" id="L394" title="All 2 branches covered.">            res += 0.5 * (p.isWhitePiece() ? 1 : -1);</span>
+          }
+
+        }
+      }
+<span class="fc" id="L399">    }</span>
+
+<span class="fc bfc" id="L401" title="All 2 branches covered.">    if (checkCheckMate()) {</span>
+<span class="pc bpc" id="L402" title="1 of 2 branches missed.">      if (!checkCheck()) {</span>
+<span class="nc" id="L403">        return 0;</span>
+      } else {
+<span class="fc bfc" id="L405" title="All 2 branches covered.">        return Double.MAX_VALUE * (whiteTurn ? -1 : 1);</span>
+      }
+    }
+
+<span class="fc bfc" id="L409" title="All 2 branches covered.">    res += forceKingToEdge() * (whiteTurn ? -1 : 1);</span>
+
+<span class="fc" id="L411">    return res;</span>
+  }
+
+  /**
+   * Function called after evaluateMove to go to the end of the capture chain to get the best
+   * optimized values out of if. This function has no depth since we will go to the end of the
+   * capture chain.
+   *
+   * @param move is the move to make.
+   * @param alpha is the maximun values founded so far.
+   * @param beta is the minimun values founded so far.
+   * @param maximize is the flag indicating whether we are maximizing the values of move or
+   *        not(white need to maximize while black need to minimize).
+   * @return value of the move.
+   */
+  public double evaluateCapture(Move move, double alpha, double beta, boolean maximize) {
+<span class="fc" id="L427">    Piece movePiece = move.getSourcePiece();</span>
+<span class="fc bfc" id="L428" title="All 2 branches covered.">    double res = maximize ? -Double.POSITIVE_INFINITY : Double.POSITIVE_INFINITY;</span>
+<span class="fc" id="L429">    final boolean prevIsMoved = movePiece.isMoved();</span>
+<span class="fc" id="L430">    final Piece destPiece = move.getDestinationPiece();</span>
+<span class="fc" id="L431">    int startPosition = pieceList.indexOf(movePiece);</span>
+<span class="fc" id="L432">    final int position = pieceList.indexOf(destPiece);</span>
+
+<span class="fc" id="L434">    makeMove(move, false, false);</span>
+<span class="fc" id="L435">    double evalCur = evaluateBoard();</span>
+<span class="fc bfc" id="L436" title="All 2 branches covered.">    if (maximize) {</span>
+<span class="fc" id="L437">      res = Math.max(res, evalCur);</span>
+<span class="fc" id="L438">      alpha = Math.max(alpha, evalCur);</span>
+    } else {
+<span class="fc" id="L440">      res = Math.min(res, evalCur);</span>
+<span class="fc" id="L441">      beta = Math.min(beta, evalCur);</span>
+    }
+
+
+<span class="fc bfc" id="L445" title="All 2 branches covered.">    if (checkCheckMate()) {</span>
+<span class="pc bpc" id="L446" title="1 of 2 branches missed.">      if (!checkCheck()) {</span>
+<span class="nc" id="L447">        res = 0;</span>
+      } else {
+<span class="fc bfc" id="L449" title="All 2 branches covered.">        res = whiteTurn ? -Double.POSITIVE_INFINITY : Double.POSITIVE_INFINITY;</span>
+      }
+<span class="fc bfc" id="L451" title="All 2 branches covered.">    } else if (beta &gt; alpha) {</span>
+
+<span class="fc" id="L453">      List&lt;Move&gt; moveList = getAllMoves(maximize, true);</span>
+
+<span class="fc bfc" id="L455" title="All 2 branches covered.">      for (Move m : moveList) {</span>
+
+<span class="fc bfc" id="L457" title="All 2 branches covered.">        if (m.getFlag() != Move.CAPTURE) {</span>
+<span class="fc" id="L458">          continue;</span>
+        }
+
+<span class="fc bfc" id="L461" title="All 2 branches covered.">        double eval = evaluateCapture(m, alpha, beta, !maximize);</span>
+
+<span class="fc bfc" id="L463" title="All 2 branches covered.">        if (maximize) {</span>
+<span class="fc" id="L464">          res = Math.max(res, eval);</span>
+<span class="fc" id="L465">          alpha = Math.max(alpha, eval);</span>
+        } else {
+<span class="fc" id="L467">          res = Math.min(res, eval);</span>
+<span class="fc" id="L468">          beta = Math.min(beta, eval);</span>
+        }
+<span class="fc bfc" id="L470" title="All 2 branches covered.">        if (beta &lt;= alpha) {</span>
+<span class="fc" id="L471">          break;</span>
+        }
+<span class="fc" id="L473">      }</span>
+    }
+
+<span class="fc" id="L476">    unmove(move, prevIsMoved, false);</span>
+<span class="fc bfc" id="L477" title="All 2 branches covered.">    if (move.isPromotion()) {</span>
+<span class="fc" id="L478">      pieceList.remove(move.getPromotedPiece());</span>
+<span class="pc bpc" id="L479" title="2 of 4 branches missed.">      int offset = (move.getFlag() == Move.CAPTURE &amp;&amp; position &lt; startPosition) ? 1 : 0;</span>
+<span class="fc" id="L480">      pieceList.add(startPosition - offset, movePiece);</span>
+    }
+
+<span class="fc" id="L483">    pieceList.add(position, destPiece);</span>
+<span class="fc" id="L484">    newMoveSet();</span>
+<span class="fc" id="L485">    return res;</span>
+  }
+
+  /**
+   * An evaluation function that evaluates a move by using minimax algorithm combining with alpha
+   * beta prunning.
+   *
+   * @param move is the move to make.
+   * @param depth is the number of moves afterwards we want to consider to evaluate the current
+   *        move.
+   * @param alpha is the maximun values founded so far.
+   * @param beta is the minimun values founded so far.
+   * @param maximize is the flag indicating whether we are maximizing the values of move or
+   *        not(white need to maximize while black need to minimize).
+   * @return value of the move.
+   */
+  public double evaluateMove(Move move, int depth, double alpha, double beta, boolean maximize) {
+<span class="fc" id="L502">    Piece movePiece = move.getSourcePiece();</span>
+<span class="fc bfc" id="L503" title="All 2 branches covered.">    double res = maximize ? -Double.POSITIVE_INFINITY : Double.POSITIVE_INFINITY;</span>
+<span class="fc" id="L504">    final boolean prevIsMoved = movePiece.isMoved();</span>
+<span class="fc" id="L505">    final Piece destPiece = move.getDestinationPiece();</span>
+<span class="fc" id="L506">    int startPosition = pieceList.indexOf(movePiece);</span>
+<span class="fc" id="L507">    int position = pieceList.indexOf(destPiece);</span>
+
+<span class="fc" id="L509">    makeMove(move, false, false);</span>
+
+<span class="fc" id="L511">    List&lt;Move&gt; moveList = getAllMoves(maximize, true);</span>
+
+<span class="fc bfc" id="L513" title="All 2 branches covered.">    if (checkCheckMate()) {</span>
+<span class="fc bfc" id="L514" title="All 2 branches covered.">      if (!checkCheck()) {</span>
+<span class="fc" id="L515">        res = 0;</span>
+      } else {
+<span class="pc bpc" id="L517" title="1 of 2 branches missed.">        res = whiteTurn ? -Double.POSITIVE_INFINITY : Double.POSITIVE_INFINITY;</span>
+      }
+<span class="fc bfc" id="L519" title="All 2 branches covered.">    } else if (depth == 0) {</span>
+
+<span class="fc" id="L521">      res = evaluateBoard();</span>
+
+
+<span class="fc bfc" id="L524" title="All 2 branches covered.">      for (Move m : moveList) {</span>
+
+<span class="fc bfc" id="L526" title="All 2 branches covered.">        if (m.getFlag() == Move.CAPTURE) {</span>
+<span class="fc bfc" id="L527" title="All 2 branches covered.">          double eval = evaluateCapture(m, alpha, beta, !maximize);</span>
+
+<span class="fc bfc" id="L529" title="All 2 branches covered.">          if (maximize) {</span>
+<span class="fc" id="L530">            res = Math.max(res, eval);</span>
+<span class="fc" id="L531">            alpha = Math.max(alpha, eval);</span>
+          } else {
+<span class="fc" id="L533">            res = Math.min(res, eval);</span>
+<span class="fc" id="L534">            beta = Math.min(beta, eval);</span>
+          }
+
+<span class="fc bfc" id="L537" title="All 2 branches covered.">          if (beta &lt;= alpha) {</span>
+<span class="fc" id="L538">            break;</span>
+          }
+        }
+<span class="fc" id="L541">      }</span>
+    } else {
+<span class="fc bfc" id="L543" title="All 2 branches covered.">      for (Move m : moveList) {</span>
+<span class="fc bfc" id="L544" title="All 2 branches covered.">        double eval = evaluateMove(m, depth - 1, alpha, beta, !maximize);</span>
+<span class="fc bfc" id="L545" title="All 2 branches covered.">        if (maximize) {</span>
+<span class="fc" id="L546">          res = Math.max(res, eval);</span>
+<span class="fc" id="L547">          alpha = Math.max(alpha, eval);</span>
+        } else {
+<span class="fc" id="L549">          res = Math.min(res, eval);</span>
+<span class="fc" id="L550">          beta = Math.min(beta, eval);</span>
+        }
+<span class="fc bfc" id="L552" title="All 2 branches covered.">        if (beta &lt;= alpha) {</span>
+<span class="fc" id="L553">          break;</span>
+        }
+<span class="fc" id="L555">      }</span>
+    }
+
+<span class="fc" id="L558">    unmove(move, prevIsMoved, false);</span>
+
+<span class="fc bfc" id="L560" title="All 2 branches covered.">    if (move.isPromotion()) {</span>
+<span class="fc" id="L561">      pieceList.remove(move.getPromotedPiece());</span>
+<span class="fc bfc" id="L562" title="All 4 branches covered.">      int offset = (move.getFlag() == Move.CAPTURE &amp;&amp; position &lt; startPosition) ? 1 : 0;</span>
+<span class="fc" id="L563">      pieceList.add(startPosition - offset, movePiece);</span>
+    }
+
+<span class="fc bfc" id="L566" title="All 2 branches covered.">    if (move.getFlag() == Move.CAPTURE) {</span>
+<span class="fc" id="L567">      pieceList.add(position, destPiece);</span>
+    }
+<span class="fc" id="L569">    newMoveSet();</span>
+<span class="fc" id="L570">    return res;</span>
+  }
+
+  /**
+   * Reset the state before a move is executed.
+   *
+   * @param move is the move had been executed.
+   * @param isMoved is whether the moving piece is previously moved or not.
+   * @param submove is the flag indicating whether the move has the submove or not.
+   */
+  public void unmove(Move move, boolean isMoved, boolean submove) {
+<span class="fc" id="L581">    final Piece movePiece = move.getSourcePiece();</span>
+<span class="fc" id="L582">    final Square startSquare = move.getStartSquare();</span>
+<span class="fc" id="L583">    final Square endSquare = move.getEndSquare();</span>
+
+<span class="fc bfc" id="L585" title="All 2 branches covered.">    if (move.getFlag() == Move.CASTLE) {</span>
+<span class="fc" id="L586">      unmove(move.getSubMove(), false, true);</span>
+    }
+
+<span class="fc bfc" id="L589" title="All 2 branches covered.">    if (!submove) {</span>
+<span class="fc bfc" id="L590" title="All 2 branches covered.">      whiteTurn = !whiteTurn;</span>
+    }
+
+<span class="fc" id="L593">    endSquare.setPiece(move.getDestinationPiece());</span>
+<span class="fc" id="L594">    startSquare.setPiece(movePiece);</span>
+<span class="fc" id="L595">    movePiece.setDestination(startSquare);</span>
+<span class="fc" id="L596">    movePiece.setMoved(isMoved);</span>
+<span class="fc" id="L597">  }</span>
+
+  /**
+   * Updates the moveset of all pieces and reset state of squares.
+   */
+  public void newMoveSet() {
+<span class="fc bfc" id="L603" title="All 2 branches covered.">    for (int i = 0; i &lt; GRIDNUM; i++) {</span>
+<span class="fc bfc" id="L604" title="All 2 branches covered.">      for (int j = 0; j &lt; GRIDNUM; j++) {</span>
+<span class="fc" id="L605">        squareMat[i][j].noControl();</span>
+      }
+    }
+<span class="fc" id="L608">    blackAttackers.removeAll(blackAttackers);</span>
+<span class="fc" id="L609">    whiteAttackers.removeAll(whiteAttackers);</span>
+<span class="fc bfc" id="L610" title="All 2 branches covered.">    for (Piece p : pieceList) {</span>
+<span class="fc" id="L611">      p.setPinPiece(null);</span>
+<span class="fc" id="L612">    }</span>
+<span class="fc bfc" id="L613" title="All 2 branches covered.">    for (Piece p : pieceList) {</span>
+<span class="fc" id="L614">      p.updatePreLegalMoves(this);</span>
+<span class="fc" id="L615">    }</span>
+
+<span class="fc bfc" id="L617" title="All 2 branches covered.">    for (Piece p : pieceList) {</span>
+<span class="fc" id="L618">      p.updateLegalMove(this);</span>
+<span class="fc" id="L619">    }</span>
+<span class="fc" id="L620">  }</span>
+
+  public CopyOnWriteArrayList&lt;Piece&gt; getAttackers(boolean isWhite) {
+<span class="fc bfc" id="L623" title="All 2 branches covered.">    return isWhite ? whiteAttackers : blackAttackers;</span>
+  }
+
+  public Piece getKing(boolean isWhite) {
+<span class="fc bfc" id="L627" title="All 2 branches covered.">    return king[isWhite ? 1 : 0];</span>
+  }
+
+  public static double distanceBetweenTwoSquares(Square square1, Square square2) {
+<span class="fc" id="L631">    return Math.sqrt(Math.pow(square1.getX() - square2.getX(), 2)</span>
+<span class="fc" id="L632">        + Math.pow(square1.getY() - square2.getY(), 2));</span>
+  }
+
+  public boolean isWhiteTurn() {
+<span class="fc" id="L636">    return whiteTurn;</span>
+  }
+
+  public Square[][] getSquareMat() {
+<span class="fc" id="L640">    return squareMat;</span>
+  }
+
+  public int getSize() {
+<span class="fc" id="L644">    return GRIDSIZE * GRIDNUM;</span>
+  }
+
+  public List&lt;Piece&gt; getPieceList() {
+<span class="fc" id="L648">    return pieceList;</span>
+  }
+
+  @Override
+  public void draw(PApplet app) {
+<span class="nc bnc" id="L653" title="All 2 branches missed.">    for (int i = 0; i &lt; GRIDNUM; i++) {</span>
+<span class="nc bnc" id="L654" title="All 2 branches missed.">      for (int j = 0; j &lt; GRIDNUM; j++) {</span>
+<span class="nc" id="L655">        squareMat[i][j].draw(app);</span>
+      }
+    }
+<span class="nc bnc" id="L658" title="All 2 branches missed.">    for (Piece piece : pieceList) {</span>
+<span class="nc" id="L659">      piece.draw(app);</span>
+<span class="nc" id="L660">    }</span>
+<span class="nc" id="L661">  }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span></div></body></html>

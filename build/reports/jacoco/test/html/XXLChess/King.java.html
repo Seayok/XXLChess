@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>King.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">chess_origin copy</a> &gt; <a href="index.source.html" class="el_package">XXLChess</a> &gt; <span class="el_source">King.java</span></div><h1>King.java</h1><pre class="source lang-java linenums">package XXLChess;
+
+/**
+ * Class of the King.
+ */
+public class King extends Piece {
+  public King(float x, float y, String code, Square curSquare) {
+<span class="fc" id="L8">    super(x, y, code, curSquare);</span>
+<span class="fc bfc" id="L9" title="All 2 branches covered.">    this.value = 10000 * (this.isWhite ? 1 : -1);</span>
+<span class="fc" id="L10">  }</span>
+
+  @Override
+  public void generateMove(Board curBoard) {
+<span class="fc" id="L14">    setKingMove(curBoard);</span>
+<span class="fc bfc" id="L15" title="All 2 branches covered.">    if (!this.isMoved) {</span>
+<span class="fc" id="L16">      setCastleMove(curBoard);</span>
+    }
+<span class="fc" id="L18">  }</span>
+
+  private void setCastleMove(Board curBoard) {
+<span class="fc" id="L21">    Square[][] squares = curBoard.getSquareMat();</span>
+<span class="fc bfc" id="L22" title="All 2 branches covered.">    for (int i = 0; i &lt; 2; i++) {</span>
+<span class="fc bfc" id="L23" title="All 2 branches covered.">      int weight = i == 0 ? 1 : -1;</span>
+<span class="fc" id="L24">      int col = (int) curSquare.getX() / GRIDSIZE;</span>
+<span class="fc" id="L25">      int row = (int) curSquare.getY() / GRIDSIZE;</span>
+<span class="fc" id="L26">      int offset = col + weight;</span>
+<span class="fc" id="L27">      Piece piece = null;</span>
+
+<span class="fc bfc" id="L29" title="All 4 branches covered.">      while (offset &gt;= 0 &amp;&amp; offset &lt; GRIDNUM) {</span>
+<span class="fc" id="L30">        Square horizontalSquare = squares[offset][row];</span>
+<span class="fc" id="L31">        piece = horizontalSquare.getPiece();</span>
+<span class="fc bfc" id="L32" title="All 2 branches covered.">        if (piece != null) {</span>
+<span class="fc" id="L33">          break;</span>
+        }
+<span class="fc" id="L35">        offset += weight;</span>
+<span class="fc" id="L36">      }</span>
+
+<span class="fc bfc" id="L38" title="All 8 branches covered.">      if (Math.abs(offset - col) &gt; 2 &amp;&amp; piece != null &amp;&amp; piece.isWhitePiece() == isWhite</span>
+<span class="fc bfc" id="L39" title="All 2 branches covered.">          &amp;&amp; !piece.isMoved &amp;&amp; piece.getCode().contains(&quot;r&quot;)) {</span>
+<span class="fc" id="L40">        Move castle = new Move(curSquare, squares[col + 2 * weight][row], Move.CASTLE, this, null);</span>
+<span class="fc" id="L41">        Move submove =</span>
+<span class="fc" id="L42">            new Move(piece.getSquare(), squares[col + weight][row], Move.NORMAL, piece, null);</span>
+
+<span class="fc" id="L44">        castle.setSubMove(submove);</span>
+<span class="fc" id="L45">        preLegalMoves.add(castle);</span>
+      }
+    }
+<span class="fc" id="L48">  }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span></div></body></html>

@@ -7,7 +7,7 @@ import processing.core.PApplet;
  */
 public class Clock extends GameObject {
   private Timer timer;
-  private boolean counting = false;
+  private boolean counting;
   private int countdown;
   private int increment;
 
