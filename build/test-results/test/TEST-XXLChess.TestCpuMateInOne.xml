@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="XXLChess.TestCpuMateInOne" tests="1" skipped="0" failures="0" errors="0" timestamp="2023-05-14T07:24:52" hostname="192-168-1-101.tpgi.com.au" time="3.013">
+<testsuite name="XXLChess.TestCpuMateInOne" tests="1" skipped="0" failures="0" errors="0" timestamp="2023-05-16T00:36:20" hostname="Khais-MacBook-Air.local" time="3.014">
   <properties/>
-  <testcase name="testCheckMate()" classname="XXLChess.TestCpuMateInOne" time="3.013"/>
+  <testcase name="testCheckMate()" classname="XXLChess.TestCpuMateInOne" time="3.014"/>
   <system-out><![CDATA[]]></system-out>
   <system-err><![CDATA[]]></system-err>
 </testsuite>

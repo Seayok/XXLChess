@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="XXLChess.TestNormalConfig" tests="7" skipped="0" failures="0" errors="0" timestamp="2023-05-14T07:24:55" hostname="192-168-1-101.tpgi.com.au" time="6.052">
+<testsuite name="XXLChess.TestNormalConfig" tests="7" skipped="0" failures="0" errors="0" timestamp="2023-05-16T00:36:23" hostname="Khais-MacBook-Air.local" time="6.051">
   <properties/>
-  <testcase name="testBoard()" classname="XXLChess.TestNormalConfig" time="0.007"/>
+  <testcase name="testBoard()" classname="XXLChess.TestNormalConfig" time="0.006"/>
   <testcase name="testClick()" classname="XXLChess.TestNormalConfig" time="0.004"/>
-  <testcase name="testClock()" classname="XXLChess.TestNormalConfig" time="0.003"/>
-  <testcase name="testMessage()" classname="XXLChess.TestNormalConfig" time="0.007"/>
+  <testcase name="testClock()" classname="XXLChess.TestNormalConfig" time="0.002"/>
+  <testcase name="testMessage()" classname="XXLChess.TestNormalConfig" time="0.005"/>
   <testcase name="testMakeMove()" classname="XXLChess.TestNormalConfig" time="6.016"/>
   <testcase name="testPlayer()" classname="XXLChess.TestNormalConfig" time="0.003"/>
-  <testcase name="testOutOfTime()" classname="XXLChess.TestNormalConfig" time="0.004"/>
+  <testcase name="testOutOfTime()" classname="XXLChess.TestNormalConfig" time="0.003"/>
   <system-out><![CDATA[]]></system-out>
   <system-err><![CDATA[]]></system-err>
 </testsuite>

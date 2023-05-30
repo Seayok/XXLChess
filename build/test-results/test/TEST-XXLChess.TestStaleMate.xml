@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="XXLChess.TestStaleMate" tests="1" skipped="0" failures="0" errors="0" timestamp="2023-05-14T07:25:04" hostname="192-168-1-101.tpgi.com.au" time="3.008">
+<testsuite name="XXLChess.TestStaleMate" tests="1" skipped="0" failures="0" errors="0" timestamp="2023-05-16T00:36:33" hostname="Khais-MacBook-Air.local" time="3.009">
   <properties/>
-  <testcase name="testStaleMate()" classname="XXLChess.TestStaleMate" time="3.008"/>
+  <testcase name="testStaleMate()" classname="XXLChess.TestStaleMate" time="3.009"/>
   <system-out><![CDATA[]]></system-out>
   <system-err><![CDATA[]]></system-err>
 </testsuite>
